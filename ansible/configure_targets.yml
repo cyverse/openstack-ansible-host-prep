@@ -1,0 +1,99 @@
+---
+- name: Configure Deployment Host
+  hosts: deployment-host
+  tags: deployment-host 
+  tasks:
+    - name: Install OSA deploy dependencies
+      apt: name="{{ item }}" state=latest
+      with_items:
+        - software-properties-common
+        - python-pip
+        - python-dev
+        - build-essential
+        - libssl-dev
+        - libffi-dev
+        - python-dev
+      tags: install
+
+    - name: Clone OSA Repository
+      git: repo=https://github.com/openstack/openstack-ansible.git
+           dest=/opt/openstack-ansible
+           clone=yes
+           version="{{ OSA_VERSION }}"
+
+    - name: Run OSA bootstrap script
+      shell: cd /opt/openstack-ansible && scripts/bootstrap-ansible.sh
+
+    - name: rsync OSA dir to new directory
+      shell: rsync -av /opt/openstack-ansible/etc/openstack_deploy /etc/
+      # syncronize: src=/opt/openstack-ansible/etc/openstack_deploy dest=/etc/ archive=yes
+
+    - debug: msg="Manually copy over new config by running 'cd /etc/openstack_deploy/ && cp openstack_user_config.yml.example openstack_user_config.yml'" 
+
+- name: Prepare All Target Hosts
+  hosts: target-hosts
+  tasks:
+    - name: install OpenStack common tools
+      apt: name={{ item }} state=latest
+      with_items:
+        - git
+        - tmux
+        - vim
+        - nmap
+        - traceroute
+      tags:
+        - install
+
+    - name: Install OSA dependencies
+      apt: name="{{ item }}" state=latest
+      with_items:
+        - aptitude
+        - build-essential
+        - git
+        - ntp
+        - ntpdate
+        - openssh-server
+        - python-dev
+        - sudo
+      tags: install
+
+    - name: Transfer Deployment host SSH key
+      authorized_key: user=root key="{{ SSH.PUBLIC_KEY }}" state=present
+      tags: ssh-keys
+
+    - name: Install OSA target host dependencies
+      apt: name="{{ item }}" state=latest
+      with_items:
+        - bridge-utils
+        - debootstrap
+        - ifenslave
+        - ifenslave-2.6
+        - lsof
+        - lvm2
+        - ntp
+        - ntpdate
+        - openssh-server
+        - sudo
+        - tcpdump
+        - vlan
+      tags: install
+
+    - name: enable required kernel modules
+      modprobe: name="{{ item }}" state=present
+      with_items:
+        - bonding
+        - 8021q
+      tags:
+        - kernel
+        - modprobe
+
+- name: Prepare Block-Storage Host(s)
+  hosts: block-storage
+  tasks:
+    - name: create the LVM physical volume
+      lvg: vg={{ item }} pvs=/dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }} vg_options="--metadatasize {{ CINDER_PHYSICAL_VOLUME.metadatasize }}"
+      with_items:
+        - cinder-volumes
+        - lxc
+      tags:
+        - lvm

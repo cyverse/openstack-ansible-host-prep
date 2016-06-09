@@ -1,0 +1,28 @@
+# {{ ansible_managed }}
+auto {{ item.value.device1 }}
+iface {{ item.value.device1 }} inet static
+  address {{ item.value.ip }}
+  description management interface
+  broadcast {{ TARGET_HOST_NETWORKING.host_network.broadcast }}
+  gateway {{ TARGET_HOST_NETWORKING.host_network.gateway }}
+  netmask {{ TARGET_HOST_NETWORKING.host_network.netmask }}
+  network {{ TARGET_HOST_NETWORKING.host_network.network }}
+  dns-nameservers {{ TARGET_HOST_NETWORKING.host_network.dns_servers }}
+  dns-search {{ TARGET_HOST_NETWORKING.host_network.dns_search }}
+
+auto {{ item.value.device1 }}.{{ TARGET_HOST_NETWORKING.host_network.container_vlan_id }}
+iface {{ item.value.device1 }}.{{ TARGET_HOST_NETWORKING.host_network.container_vlan_id }} inet manual
+  vlan-raw-device {{ item.value.device1 }}
+
+auto {{ item.value.device1 }}.{{ TARGET_HOST_NETWORKING.host_network.storage_vlan_id }}
+iface {{ item.value.device1 }}.{{ TARGET_HOST_NETWORKING.host_network.storage_vlan_id }} inet manual
+  vlan-raw-device {{ item.value.device1 }}
+
+auto {{ item.value.device2 }}
+iface {{ item.value.device2 }} inet manual
+  up ip link set dev $IFACE up
+  down ip link set dev $IFACE down
+
+auto {{ item.value.device2 }}.{{ TARGET_HOST_NETWORKING.host_network.tunnel_vlan_id }}
+iface {{ item.value.device2 }}.{{ TARGET_HOST_NETWORKING.host_network.tunnel_vlan_id }} inet manual
+  vlan-raw-device {{ item.value.device2 }}

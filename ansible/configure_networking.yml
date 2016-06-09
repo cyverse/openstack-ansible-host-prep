@@ -1,0 +1,6 @@
+---
+
+- name: Set up Target Host Networking
+  hosts: target-hosts
+  roles:
+    - configure-networking

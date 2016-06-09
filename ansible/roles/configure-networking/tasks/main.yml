@@ -1,0 +1,80 @@
+---
+# tasks file for configure-networking
+
+#######################
+# Ensure interfaces.d #
+#######################
+- name: create directory
+  file:
+    path: "{{ network_interface_path }}"
+    state: directory
+  tags:
+    - config
+
+############################
+# Template interfaces file #
+############################
+- name: template interfaces
+  template:
+    src: all_interfaces.j2
+    dest: "{{ network_all_interfaces_path }}"
+    backup: yes
+  tags:
+    - networking
+
+####################
+# Remove old files #
+####################
+- name: create directory
+  file:
+    path: "{{ network_interfaces_dir_path }}/backups"
+    state: directory
+  tags:
+    - config
+
+- name: backup files
+  shell: "for i in $(ls {{ network_interface_path }});do mv {{ network_interface_path }}/$i {{ network_interfaces_dir_path }}/backups/${i}.$(date +'%Y%m%d_%H%M%S');done"
+
+###############################
+# Template interfaces.d files #
+###############################
+- name: configure physical and tagged interface
+  template:
+    src: eth.j2
+    dest: "{{ network_interface_path }}/device-eth"
+  with_dict: TARGET_HOSTS
+  when: item.key == "{{ ansible_hostname }}"
+  tags: debug
+
+- name: configure bridge interfaces
+  template:
+    src: bridges.j2
+    dest: "{{ network_interface_path }}/device-bridges"
+  with_dict: TARGET_HOSTS
+  when: item.key == "{{ ansible_hostname }}"
+  tags: debug
+
+- name: manually up and down interfaces
+  shell: ifdown -a && ifup -a
+  tags: restart-networking
+
+##################################
+# Template hosts and .ssh/config #
+##################################
+- name: template /etc/hosts file for all openstack nodes
+  template: src=hosts.j2 dest=/etc/hosts
+  tags: hosts-file
+
+- name: template .ssh/config file on all openstack nodes
+  template: src=config.j2 dest=/root/.ssh/config backup=yes
+  tags: ssh-config
+
+- name: template local .ssh/config file
+  local_action: template src=config_local.j2 dest=~/.ssh/config2
+  run_once: true
+  tags: ssh-config
+
+- name: notify about local .ssh/config
+  debug: msg="Be sure to add the contents of ~/.ssh/config2 to your ~/.ssh/config !!"
+  run_once: true
+  tags: ssh-config

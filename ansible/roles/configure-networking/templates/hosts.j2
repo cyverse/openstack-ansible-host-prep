@@ -1,0 +1,17 @@
+127.0.0.1 localhost
+
+{{ ansible_ssh_host }}	{{ inventory_hostname }}.iplantcollaborative.org {{ inventory_hostname }}
+
+{% for k,v in TARGET_HOSTS | dictsort(false, 'value') %}
+{%   if k != inventory_hostname %}
+{{ v.ip }} {{ k }}
+{%   endif %}
+{% endfor %}
+
+# The following lines are desirable for IPv6 capable hosts
+::1 ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+ff02::3 ip6-allhosts

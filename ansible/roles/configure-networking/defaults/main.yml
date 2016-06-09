@@ -1,0 +1,6 @@
+---
+# defaults file for configure-networking
+
+network_interfaces_dir_path: "/etc/network"
+network_all_interfaces_path: "/etc/network/interfaces"
+network_interface_path: "/etc/network/interfaces.d"

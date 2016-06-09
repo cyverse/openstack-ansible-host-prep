@@ -1,0 +1,56 @@
+---
+
+TARGET_HOST_NETWORKING:
+  host_network:
+    broadcast: 10.1.1.255
+    gateway: 10.1.1.1
+    netmask: 255.255.255.0
+    network: 10.1.1.0
+    dns_servers: 8.8.8.8
+    dns_search: domain.com
+    container_vlan_id: 101
+    tunnel_vlan_id: 102
+    storage_vlan_id: 103
+  container_network:
+    subnet: 192.168
+    mgmt_subnet: 100
+    tunnel_subnet: 85
+    storage_subnet: 95
+    netmask: 255.255.255.0
+
+TARGET_HOSTS:
+  infra_controle_plane_host1:
+    ip: 10.1.1.10
+    device1: eth{primary}
+    device2: eth{secondary}
+  infra_controle_plane_host2:
+    ip: 10.1.1.11
+    device1: eth{primary}
+    device2: eth{secondary}
+  infra_controle_plane_host3:
+    ip: 10.1.1.12
+    device1: eth{primary}
+    device2: eth{secondary}
+  infra_controle_plane_host4:
+    ip: 10.1.1.13
+    device1: eth{primary}
+    device2: eth{secondary}
+  infra_storage1:
+    ip: 10.1.1.14
+    device1: eth{primary}
+    device2: eth{secondary}
+  compute1:
+    ip: 10.1.1.15
+    device1: eth{primary}
+    device2: eth{secondary}
+
+# Deploy node SSH public key
+SSH:
+  PUBLIC_KEY: ""
+  PORT: 22
+
+CINDER_PHYSICAL_VOLUME:
+  physical_volume: sdb1
+  metadatasize: 4096
+
+OSA_VERSION: 12.0.9
