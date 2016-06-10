@@ -1,5 +1,17 @@
 ---
 
+# Comment out this variable if you do not wish to have Ansible set root passwords
+GENERATE_ROOT_PASSWORDS: True
+
+TARGET_HOST_PASSWORDS:
+  file: openstack_target_host_passwords.txt
+  password_length: 12
+
+# Deploy node SSH public key
+SSH:
+  PUBLIC_KEY: ""
+  PORT: 22
+
 TARGET_HOST_NETWORKING:
   host_network:
     broadcast: 10.1.1.255
@@ -43,11 +55,6 @@ TARGET_HOSTS:
     ip: 10.1.1.15
     device1: eth{primary}
     device2: eth{secondary}
-
-# Deploy node SSH public key
-SSH:
-  PUBLIC_KEY: ""
-  PORT: 22
 
 CINDER_PHYSICAL_VOLUME:
   physical_volume: sdb1

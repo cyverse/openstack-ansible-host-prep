@@ -1,6 +1,8 @@
 ---
 # defaults file for host-credentials
 
+# GENERATE_ROOT_PASSWORDS: True
+
 TARGET_HOST_PASSWORDS:
   file: openstack_target_host_passwords.txt
   password_length: 12

@@ -32,6 +32,9 @@
     - modprobe
     - kernel
 
+# Verify operation
+# for i in <HOSTS>; do echo $i;ssh -p <SSH_PORT> -q root@$i "cat /etc/modules | grep 'bonding\|8021q'"; echo; done
+
 #######################
 # Ensure interfaces.d #
 #######################
