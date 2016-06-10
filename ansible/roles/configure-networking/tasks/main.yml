@@ -4,16 +4,47 @@
 ############
 # SSH keys #
 ############
-# - debug: var=groups['deployment-host'][0]
-#   tags:
-#     - ssh-keys
+- name: generate ssh keys for master host
+  user: name=root generate_ssh_key=yes ssh_key_bits=4096 ssh_key_file=.ssh/id_rsa ssh_key_comment='{{ inventory_hostname }}'
+  when: inventory_hostname == groups['deployment-host'][0]
+  run_once: yes
+  tags:
+    - ssh-keys
 
-# - name: generate ssh keys for master host
-#   user: name=root generate_ssh_key=yes ssh_key_bits=4096 ssh_key_file=.ssh/id_rsa
-#   delegate_to: '{{ groups['deployment-host'][0] }}'
-#   run_once: yes
-#   tags:
-#     - ssh-keys
+- name: retrieve remote ssh public key
+  fetch: dest="/tmp/" src="~/.ssh/{{ item }}" flat=yes
+  with_items:
+    - id_rsa
+    - id_rsa.pub
+  when: inventory_hostname == groups['deployment-host'][0]
+  tags:
+    - ssh-keys
+    - ssh-keys-distribute
+
+- name: distribute keys to all hosts
+  authorized_key: >
+    key="{{ lookup('file', '/tmp/id_rsa.pub') }}"
+    state=present
+    user=root
+  ignore_errors: yes
+  tags:
+    - ssh-keys
+    - ssh-keys-distribute
+
+- name: copy master's private key to all hosts
+  copy: src=/tmp/id_rsa dest=~/.ssh/id_rsa mode=0600
+  tags:
+    - ssh-keys
+
+- name: remove temp local pubkey copies
+  local_action: file dest="/tmp/{{ item }}" state=absent
+  with_items:
+    - id_rsa
+    - id_rsa.pub
+  when: inventory_hostname == groups['deployment-host'][0]
+  tags:
+    - ssh-keys
+    - ssh-keys-distribute
 
 #######################
 # Ensure interfaces.d #
