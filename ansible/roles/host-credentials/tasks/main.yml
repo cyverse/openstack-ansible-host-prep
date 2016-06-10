@@ -25,6 +25,7 @@
   register: passwd_file
   with_items: groups['target-hosts']
   when: GENERATE_ROOT_PASSWORDS is defined
+  failed_when: False
   run_once: true
   tags:
     - passwd-file
