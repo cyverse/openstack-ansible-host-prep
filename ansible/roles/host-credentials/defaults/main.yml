@@ -1,0 +1,6 @@
+---
+# defaults file for host-credentials
+
+TARGET_HOST_PASSWORDS:
+  file: openstack_target_host_passwords.txt
+  password_length: 12

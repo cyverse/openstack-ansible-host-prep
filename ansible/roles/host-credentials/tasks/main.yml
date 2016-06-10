@@ -1,0 +1,133 @@
+---
+# tasks file for host-credentials
+
+#########################
+# Target Host Passwords #
+#########################
+- name: generate root password
+  local_action: shell pwgen {{ TARGET_HOST_PASSWORDS.password_length }} 1
+  with_items: groups['target-hosts']
+  run_once: true
+  register: root_pass
+  tags:
+    - password
+    - generate-passwords
+
+- name: ensure that password file exists
+  local_action: file path="{{ TARGET_HOST_PASSWORDS.file }}" state=touch
+  tags:
+    - password
+
+# - name: check to see if passwords have already been generated
+#   local_action: shell grep {{ item | upper }} {{ TARGET_HOST_PASSWORDS.file }}
+#   register: slurp_file
+#   with_items: groups['target-hosts']
+#   run_once: true
+#   tags:
+#     - slurp
+
+# - name: output
+#   debug: msg='{{ item.stdout }}'
+#   with_items: slurp_file.results
+#   run_once: true
+#   tags:
+#     - slurp
+
+# - name: output
+#   debug: var=slurp_file
+#   run_once: true
+#   tags:
+#     - slurp
+
+- name: output password to file
+  local_action: 'lineinfile dest="{{ TARGET_HOST_PASSWORDS.file }}" regexp="^{{ item.item | upper }}(.*)" line="{{ item.item | upper }}: {{ item.stdout }}"'
+  with_items: root_pass.results
+  tags:
+    - password
+
+- name: retrieve password from file
+  local_action: shell cat {{ TARGET_HOST_PASSWORDS.file }} | grep {{ inventory_hostname | upper }} | cut -f 2 -d ' '
+  register: pass_from_file
+  tags:
+    - pass-change
+
+- name: encrypt generated root password
+  local_action: shell python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.encrypt('{{ pass_from_file.stdout }}')"
+  register: encrypted_pass
+
+- name: the root password will be set to the following
+  debug: msg='{{ pass_from_file.stdout }}'
+  tags:
+    - pass-change
+
+- name: change root password
+  user: name=root password="{{ encrypted_pass.stdout }}"
+  when: pass_from_file.stdout != ""
+  tags:
+    - pass-change
+
+############
+# SSH keys #
+############
+- name: generate ssh keys for master host
+  user: name=root generate_ssh_key=yes ssh_key_bits=4096 ssh_key_file=.ssh/id_rsa ssh_key_comment='{{ inventory_hostname }}'
+  when: inventory_hostname == groups['deployment-host'][0]
+  run_once: yes
+  tags:
+    - ssh-keys
+
+- name: retrieve remote ssh public key
+  fetch: dest="/tmp/" src="~/.ssh/{{ item }}" flat=yes
+  with_items:
+    - id_rsa
+    - id_rsa.pub
+  when: inventory_hostname == groups['deployment-host'][0]
+  tags:
+    - ssh-keys
+    - ssh-keys-distribute
+
+- name: distribute keys to all hosts
+  authorized_key: >
+    key="{{ lookup('file', '/tmp/id_rsa.pub') }}"
+    state=present
+    user=root
+  ignore_errors: yes
+  tags:
+    - ssh-keys
+    - ssh-keys-distribute
+
+- name: copy master's private key to all hosts
+  copy: src=/tmp/id_rsa dest=~/.ssh/id_rsa mode=0600
+  tags:
+    - ssh-keys
+
+- name: remove temp local pubkey copies
+  local_action: file dest="/tmp/{{ item }}" state=absent
+  with_items:
+    - id_rsa
+    - id_rsa.pub
+  when: inventory_hostname == groups['deployment-host'][0]
+  tags:
+    - ssh-keys
+    - ssh-keys-distribute
+
+##################################
+# Template hosts and .ssh/config #
+##################################
+- name: template /etc/hosts file for all openstack nodes
+  template: src=hosts.j2 dest=/etc/hosts
+  tags: hosts-file
+
+- name: template .ssh/config file on all openstack nodes
+  template: src=config.j2 dest=/root/.ssh/config backup=yes
+  tags: ssh-config
+
+- name: template local .ssh/config file
+  local_action: template src=config_local.j2 dest=~/.ssh/config2
+  run_once: true
+  tags: ssh-config
+
+- name: notify about local .ssh/config
+  debug: msg="Be sure to add the contents of ~/.ssh/config2 to your ~/.ssh/config !!"
+  run_once: true
+  tags: ssh-config
