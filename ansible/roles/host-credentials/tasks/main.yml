@@ -18,26 +18,20 @@
   tags:
     - password
 
-# - name: check to see if passwords have already been generated
-#   local_action: shell grep {{ item | upper }} {{ TARGET_HOST_PASSWORDS.file }}
-#   register: slurp_file
-#   with_items: groups['target-hosts']
-#   run_once: true
-#   tags:
-#     - slurp
+- name: check to see if passwords have already been generated
+  local_action: shell grep {{ item | upper }} {{ TARGET_HOST_PASSWORDS.file }}
+  register: passwd_file
+  with_items: groups['target-hosts']
+  run_once: true
+  tags:
+    - passwd-file
 
 # - name: output
 #   debug: msg='{{ item.stdout }}'
-#   with_items: slurp_file.results
+#   with_items: passwd_file.results
 #   run_once: true
 #   tags:
-#     - slurp
-
-# - name: output
-#   debug: var=slurp_file
-#   run_once: true
-#   tags:
-#     - slurp
+#     - passwd-file
 
 - name: output password to file
   local_action: 'lineinfile dest="{{ TARGET_HOST_PASSWORDS.file }}" regexp="^{{ item.item | upper }}(.*)" line="{{ item.item | upper }}: {{ item.stdout }}"'

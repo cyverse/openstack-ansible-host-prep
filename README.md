@@ -1,5 +1,17 @@
 # CyVerse OpenStack Ansible Deployment
 
+## Ansible Environment
+
+Install Ansible 2.1 by following instructions listed under the "Ansible 2.1" section found [here.](https://github.com/cyverse/ansible-tips-and-tricks/blob/master/docs/ansible/install.md)
+
+```
+sudo easy_install pip
+pip install --upgrade pip virtualenv virtualenvwrapper
+virtualenv ansible2.1
+source ansible2.1/bin/activate
+pip install -r requirements.txt
+```
+
 ## Resources
 
 * <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-workflow.html>
