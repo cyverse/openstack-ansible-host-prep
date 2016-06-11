@@ -21,3 +21,6 @@ infra_storage1 ansible_ssh_host=10.1.1.14 ansible_ssh_port=22
 
 [compute]
 compute1 ansible_ssh_host=10.1.1.15 ansible_ssh_port=22
+
+[mirror]
+apt-mirror ansible_ssh_host=10.1.1.5 ansible_ssh_port=22

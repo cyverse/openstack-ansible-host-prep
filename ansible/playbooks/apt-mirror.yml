@@ -1,0 +1,6 @@
+---
+
+- name: Set up Target Host Accounts and Passwords
+  hosts: mirror
+  roles:
+    - apt-mirror

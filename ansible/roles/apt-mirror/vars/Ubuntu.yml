@@ -1,0 +1,11 @@
+---
+
+PACKAGES:
+  - apt-mirror
+  - nginx
+
+MIRROR:
+  path: /etc/apt/mirror.list
+  update_cmd: su - apt-mirror -c apt-mirror
+  repo_path:
+    - { src: '/var/spool/apt-mirror/mirror', dest: '/var/www/ubuntu' }

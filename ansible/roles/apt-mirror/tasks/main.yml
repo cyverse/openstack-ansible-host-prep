@@ -1,0 +1,49 @@
+---
+# tasks file for apt-mirror
+
+# # Setup Sites
+# * <https://raymii.org/s/tutorials/Set_up_a_local_Ubuntu_debian_apt_mirror.html>
+# * <https://www.howtoforge.com/local_debian_ubuntu_mirror>
+# * <http://askubuntu.com/questions/37753/how-can-i-get-apt-to-use-a-mirror-close-to-me-or-choose-a-faster-mirror>
+# * <http://askubuntu.com/questions/551064/how-to-create-local-repository-using-apt-mirror-and-mirrorkit-for-selected-archi>
+# * <http://linoxide.com/ubuntu-how-to/setup-local-repository-ubuntu/>
+
+- name: gather os specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
+    - "{{ ansible_distribution }}.yml"
+  tags: vars
+
+- name: install basic packages
+  action: >
+    {{ ansible_pkg_mgr }} name={{ item }} state=latest update_cache=yes
+  with_items: '{{ PACKAGES }}'
+  tags:
+    - install
+
+- name: configure mirror
+  template: src={{ item }} dest={{ MIRROR.path }} backup=yes
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.mirror.list.j2"
+    - "{{ ansible_distribution }}.mirror.list.j2"
+  tags: template-mirror-list
+
+# for i in $(pgrep -f wget |xargs); do kill -9 $i ;done
+
+- name: get mirror packages
+  shell: '{{ MIRROR.update_cmd }}'
+  register: mirror_update
+  tags:
+    - update
+
+- name: print output
+  debug: var=mirror_update.stdout
+  tags:
+    - update
+
+- name: configure web endpoint for mirror
+  file: src={{ item.src }} dest={{ item.dest }} state=link
+  with_items: '{{ MIRROR.repo_path }}'
+  tags:
+    - mirror
