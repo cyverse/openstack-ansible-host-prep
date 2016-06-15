@@ -13,7 +13,9 @@
   with_first_found:
     - "{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
     - "{{ ansible_distribution }}.yml"
-  tags: vars
+  tags:
+    - vars
+    - mirror
 
 - name: install basic packages
   action: >
@@ -47,3 +49,21 @@
   with_items: '{{ MIRROR.repo_path }}'
   tags:
     - mirror
+
+- name: add apache virtualhost config
+  template: src={{ APACHE.conf }}.j2 dest={{ APACHE.sites_available }}/{{ APACHE.conf }} backup=yes
+  tags:
+    - mirror
+    - apache2
+
+- name: enable apache2 site for mirror
+  file: src={{ APACHE.sites_available }}/{{ APACHE.conf }} dest={{ APACHE.sites_enabled }}/{{ APACHE.conf }} state=link
+  tags:
+    - mirror
+    - apache2
+
+- name: restart apache2
+  service: name={{ APACHE.service }} state=restarted enabled=yes
+  tags:
+    - mirror
+    - apache2
