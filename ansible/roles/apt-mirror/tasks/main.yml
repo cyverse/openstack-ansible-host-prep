@@ -8,6 +8,8 @@
 # * <http://askubuntu.com/questions/551064/how-to-create-local-repository-using-apt-mirror-and-mirrorkit-for-selected-archi>
 # * <http://linoxide.com/ubuntu-how-to/setup-local-repository-ubuntu/>
 
+# * FIX: <http://askubuntu.com/questions/465303/apt-mirror-error>
+
 - name: gather os specific variables
   include_vars: "{{ item }}"
   with_first_found:
@@ -16,6 +18,7 @@
   tags:
     - vars
     - mirror
+    - source
 
 - name: install basic packages
   action: >
@@ -33,16 +36,16 @@
 
 # for i in $(pgrep -f wget |xargs); do kill -9 $i ;done
 
-- name: get mirror packages
-  shell: '{{ MIRROR.update_cmd }}'
-  register: mirror_update
-  tags:
-    - update
+# - name: get mirror packages
+#   shell: '{{ MIRROR.update_cmd }}'
+#   register: mirror_update
+#   tags:
+#     - update
 
-- name: print output
-  debug: var=mirror_update.stdout
-  tags:
-    - update
+# - name: print output
+#   debug: var=mirror_update.stdout
+#   tags:
+#     - update
 
 - name: configure web endpoint for mirror
   file: src={{ item.src }} dest={{ item.dest }} state=link
@@ -67,3 +70,16 @@
   tags:
     - mirror
     - apache2
+
+- name: template source.list to all client nodes
+  template: src=sources.list.j2 dest={{ MIRROR.client_path }} backup=yes
+  # with_first_found:
+  #   - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.sources.list.j2"
+  #   - "{{ ansible_distribution }}.sources.list.j2"
+  #   - sources.list.j2
+  delegate_to: '{{ item }}'
+  with_items: "{{ groups['target-hosts'] }}"
+  delegate_facts: True
+  tags:
+    - template-source-list
+    - source

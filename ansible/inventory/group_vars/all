@@ -61,3 +61,5 @@ CINDER_PHYSICAL_VOLUME:
   metadatasize: 4096
 
 OSA_VERSION: 12.0.9
+
+MIRROR_HOSTS: mirror.domain.com
