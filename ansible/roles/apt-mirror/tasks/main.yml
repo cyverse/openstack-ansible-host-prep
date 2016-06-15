@@ -36,16 +36,16 @@
 
 # for i in $(pgrep -f wget |xargs); do kill -9 $i ;done
 
-# - name: get mirror packages
-#   shell: '{{ MIRROR.update_cmd }}'
-#   register: mirror_update
-#   tags:
-#     - update
+- name: get mirror packages
+  shell: '{{ MIRROR.update_cmd }}'
+  register: mirror_update
+  tags:
+    - update
 
-# - name: print output
-#   debug: var=mirror_update.stdout
-#   tags:
-#     - update
+- name: print output
+  debug: var=mirror_update.stdout
+  tags:
+    - update
 
 - name: configure web endpoint for mirror
   file: src={{ item.src }} dest={{ item.dest }} state=link
