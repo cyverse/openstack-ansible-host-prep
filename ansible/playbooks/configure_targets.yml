@@ -110,8 +110,19 @@
     - name: create the LVM physical volume manually
       shell: "{{ item }}"
       with_items:
-        - "pvcreate --metadatasize {{ CINDER_PHYSICAL_VOLUME.metadatasize }} /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}"
+        - "pvcreate --metadatasize {{ CINDER_PHYSICAL_VOLUME.metadatasize }}Mg /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}"
         - "vgcreate cinder-volumes /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}"
         # - "vgcreate lxc /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}"
+      tags:
+        - lvm
+
+    - name: get LVM metadatasize
+      shell: pvs --units m -o pv_mda_count,pv_mda_free,pv_mda_size {{ CINDER_PHYSICAL_VOLUME.physical_volume }}
+      register: lvm_metadatasize
+      tags:
+        - lvm
+
+    - name: show output LVM metadatasize
+      debug: msg="{{ lvm_metadatasize.stdout }}"
       tags:
         - lvm
