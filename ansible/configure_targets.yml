@@ -90,10 +90,27 @@
 - name: Prepare Block-Storage Host(s)
   hosts: block-storage
   tasks:
-    - name: create the LVM physical volume
-      lvg: vg={{ item }} pvs=/dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }} vg_options="--metadatasize {{ CINDER_PHYSICAL_VOLUME.metadatasize }}"
+    # - name: create the LVM physical volume
+    #   lvg: vg={{ item }} pvs=/dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }} vg_options="--metadatasize {{ CINDER_PHYSICAL_VOLUME.metadatasize }}"
+    #   with_items:
+    #     - cinder-volumes
+    #     - lxc
+    #   tags:
+    #     - lvm
+
+    - name: print steps to partition disk
+      debug: msg="{{ item }}"
+      with_items: PARTITIONING
+      run_once: true
+      tags:
+        - lvm
+        - partition
+
+    - name: create the LVM physical volume manually
+      shell: "{{ item }}"
       with_items:
-        - cinder-volumes
-        - lxc
+        - "pvcreate --metadatasize {{ CINDER_PHYSICAL_VOLUME.metadatasize }} /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}"
+        - "vgcreate cinder-volumes /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}"
+        # - "vgcreate lxc /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}"
       tags:
         - lvm
