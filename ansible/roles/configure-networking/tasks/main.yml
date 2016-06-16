@@ -1,6 +1,21 @@
 ---
 # tasks file for configure-networking
 
+###############################
+# Install networking packages #
+###############################
+- name: Install network package dependencies
+  apt: name="{{ item }}" state=latest
+  with_items:
+    - bridge-utils
+    - debootstrap
+    - ifenslave
+    - ifenslave-2.6
+    - lsof
+    - tcpdump
+    - vlan
+  tags: install
+
 #############################################
 # Enable required sysctl and kernel modules #
 #############################################
