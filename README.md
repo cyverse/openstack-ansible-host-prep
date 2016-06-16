@@ -308,3 +308,9 @@ Re-run Ansible Playbook to include changes for block-storage node
 	```
 	ansible-playbook playbooks/configure_targets.yml
 	```
+	
+1. Manually copy and enable configuration file for OSA
+
+	```
+	cd /etc/openstack_deploy/ && cp openstack_user_config.yml.example openstack_user_config.yml
+	```
