@@ -297,6 +297,12 @@ Re-run Ansible Playbook to include changes for block-storage node
 	ansible-playbook playbooks/configure_networking.yml
 	```
 	
+1. Run Playbook to set up an Ubuntu `apt-mirror` using a completely separate host (could use a target-host, but it is not recommended)
+
+	```
+	ansible-playbook playbooks/apt-mirror.yml
+	```
+
 1. Prepare hosts for OSA Deployment.  This Playbook configures the Deployment host AND OSA Target-hosts.  (Ensure that `hosts` and `group_vars/all` are filled out and accurate)
 
 	```
