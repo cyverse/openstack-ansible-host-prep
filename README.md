@@ -1,17 +1,5 @@
 # CyVerse OpenStack Ansible Deployment
 
-## Ansible Environment
-
-Install Ansible 2.1 by following instructions listed under the "Ansible 2.1" section found [here.](https://github.com/cyverse/ansible-tips-and-tricks/blob/master/docs/ansible/install.md)
-
-```
-sudo easy_install pip
-pip install --upgrade pip virtualenv virtualenvwrapper
-virtualenv ansible2.1
-source ansible2.1/bin/activate
-pip install -r requirements.txt
-```
-
 ## Resources
 
 * <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-workflow.html>
@@ -295,3 +283,22 @@ infra_control_plane_host | eth{primary} | 10.1.1.10 | N/A
 ## Prepare Target Hosts
 
 Re-run Ansible Playbook to include changes for block-storage node
+
+1. Run Ansible Playbook to set up Bare-Metal host credentials, SSH keys and root passwords.  (Very important to configure root password, so that recovery of configuration is still possible from the host's console)
+
+	```
+	cd ansible
+	ansible-playbook playbooks/host_credentials.yml
+	```
+	
+1. Configure Bare-Metal host networking for OSA setup (VLAN tagged interfaces and LinuxBridges).  At this point, you MUST modify the `hosts` file AND `group_vars/all` variables under `TARGET_HOST_NETWORKING`, `TARGET_HOSTS` and `CINDER_PHYSICAL_VOLUME` sections.
+
+	```
+	ansible-playbook playbooks/configure_networking.yml
+	```
+	
+1. Prepare hosts for OSA Deployment.  This Playbook configures the Deployment host AND OSA Target-hosts.  (Ensure that `hosts` and `group_vars/all` are filled out and accurate)
+
+	```
+	ansible-playbook playbooks/configure_targets.yml
+	```
