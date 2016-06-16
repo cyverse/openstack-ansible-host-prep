@@ -47,25 +47,27 @@
 
 - name: retrieve password from file
   local_action: shell cat {{ TARGET_HOST_PASSWORDS.file }} | grep {{ inventory_hostname | upper }} | cut -f 2 -d ' '
-  when: GENERATE_ROOT_PASSWORDS is defined
+  when: GENERATE_ROOT_PASSWORDS is defined or SET_ROOT_PASSWORDS is defined
   register: pass_from_file
   tags:
     - pass-change
 
 - name: encrypt generated root password
   local_action: shell python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.encrypt('{{ pass_from_file.stdout }}')"
-  when: GENERATE_ROOT_PASSWORDS is defined
+  when: GENERATE_ROOT_PASSWORDS is defined or SET_ROOT_PASSWORDS is defined
   register: encrypted_pass
+  tags:
+    - pass-change
 
 - name: the root password will be set to the following
   debug: msg='{{ pass_from_file.stdout }}'
-  when: GENERATE_ROOT_PASSWORDS is defined
+  when: GENERATE_ROOT_PASSWORDS is defined or SET_ROOT_PASSWORDS is defined
   tags:
     - pass-change
 
 - name: change root password
   user: name=root password="{{ encrypted_pass.stdout }}"
-  when: pass_from_file.stdout != "" and GENERATE_ROOT_PASSWORDS is defined
+  when: pass_from_file.stdout != "" and ( GENERATE_ROOT_PASSWORDS is defined or SET_ROOT_PASSWORDS is defined )
   tags:
     - pass-change
 
