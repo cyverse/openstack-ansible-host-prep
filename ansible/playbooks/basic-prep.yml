@@ -1,0 +1,6 @@
+---
+
+- name: Basic preparation for hosts
+  hosts: target-hosts
+  roles:
+    - basic-prep

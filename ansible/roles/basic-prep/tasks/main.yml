@@ -1,0 +1,12 @@
+---
+# tasks file for basic-prep
+
+- name: copy remote authorized_keys file to root
+  copy:
+    remote_src: true
+    src: /home/ubuntu/.ssh/authorized_keys
+    dest: /root/.ssh/authorized_keys
+    owner: root
+    mode: 644
+  tags:
+    - basic

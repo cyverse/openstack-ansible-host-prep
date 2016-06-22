@@ -8,7 +8,7 @@ MIRROR:
   path: /etc/apt/mirror.list
   update_cmd: su - apt-mirror -c apt-mirror
   repo_path:
-    - { src: '/var/spool/apt-mirror/mirror/archive.ubuntu.com/ubuntu/', dest: '/var/www/ubuntu' }
+    - { src: '/var/spool/apt-mirror/mirror/us.archive.ubuntu.com/ubuntu/', dest: '/var/www/ubuntu' }
   client_path: /etc/apt/sources.list
 
 APACHE:

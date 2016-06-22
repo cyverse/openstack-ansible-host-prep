@@ -1,8 +1,8 @@
 ---
 
 # Comment out this variable if you do not wish to have Ansible set root passwords
-# GENERATE_ROOT_PASSWORDS: True
-# SET_ROOT_PASSWORDS: True
+GENERATE_ROOT_PASSWORDS: True
+SET_ROOT_PASSWORDS: True
 
 TARGET_HOST_PASSWORDS:
   file: openstack_target_host_root_passwords.txt
@@ -15,47 +15,47 @@ SSH:
 
 TARGET_HOST_NETWORKING:
   host_network:
-    broadcast: 10.1.1.255
-    gateway: 10.1.1.1
-    netmask: 255.255.255.0
-    network: 10.1.1.0
-    dns_servers: 8.8.8.8
-    dns_search: domain.com
-    container_vlan_id: 101
-    tunnel_vlan_id: 102
-    storage_vlan_id: 103
+    broadcast: 10.109.255.255
+    gateway: 10.109.252.1
+    netmask: 255.255.252.0
+    network: 10.109.252.0
+    dns_servers: 10.11.10.11
+    dns_search: genome.duke.edu
+    container_vlan_id: 60
+    tunnel_vlan_id: 61
+    storage_vlan_id: 62
   container_network:
     subnet: 192.168
-    mgmt_subnet: 100
-    tunnel_subnet: 85
-    storage_subnet: 95
+    mgmt_subnet: 80
+    tunnel_subnet: 81
+    storage_subnet: 82
     netmask: 255.255.255.0
 
 TARGET_HOSTS:
-  infra_controle_plane_host1:
-    ip: 10.1.1.10
-    device1: eth{primary}
-    device2: eth{secondary}
-  infra_controle_plane_host2:
-    ip: 10.1.1.11
-    device1: eth{primary}
-    device2: eth{secondary}
-  infra_controle_plane_host3:
-    ip: 10.1.1.12
-    device1: eth{primary}
-    device2: eth{secondary}
-  infra_controle_plane_host4:
-    ip: 10.1.1.13
-    device1: eth{primary}
-    device2: eth{secondary}
-  infra_storage1:
-    ip: 10.1.1.14
-    device1: eth{primary}
-    device2: eth{secondary}
+  infra-controle-plane-host1:
+    ip: 10.109.252.84
+    device1: eth0
+    device2: eth1
+  infra-controle-plane-host2:
+    ip: 10.109.252.85
+    device1: eth0
+    device2: eth1
+  infra-controle-plane-host3:
+    ip: 10.109.252.87
+    device1: eth0
+    device2: eth1
+  infra-controle-plane-host4:
+    ip: 10.109.252.88
+    device1: eth0
+    device2: eth1
+  infra-storage1:
+    ip: 10.109.252.119
+    device1: eth0
+    device2: eth1
   compute1:
-    ip: 10.1.1.15
-    device1: eth{primary}
-    device2: eth{secondary}
+    ip: 10.109.252.89
+    device1: eth0
+    device2: eth1
 
 CINDER_PHYSICAL_VOLUME:
   physical_volume: sdb1
@@ -69,4 +69,4 @@ PARTITIONING:
 
 OSA_VERSION: 12.0.9
 
-MIRROR_HOSTS: mirror.domain.com
+MIRROR_HOSTS: lsrc-compute-3-0.genome.duke.edu
