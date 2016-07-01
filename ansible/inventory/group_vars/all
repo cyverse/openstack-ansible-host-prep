@@ -67,6 +67,6 @@ PARTITIONING:
   - "/sbin/parted /dev/sdb -s set 1 lvm on"
   - "/sbin/parted /dev/sdb -s p"
 
-OSA_VERSION: 12.0.9
+OSA_VERSION: 12.0.10
 
 MIRROR_HOSTS: mirror.domain.com
