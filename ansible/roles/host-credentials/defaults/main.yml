@@ -1,7 +1,7 @@
 ---
 # defaults file for host-credentials
 
-# GENERATE_ROOT_PASSWORDS: True
+GENERATE_ROOT_PASSWORDS: True
 
 TARGET_HOST_PASSWORDS:
   file: openstack_target_host_root_passwords.txt
