@@ -1,5 +1,59 @@
 # CyVerse OpenStack Ansible Deployment
 
+## Deploy OpenStack
+
+1. Create `apt-mirror` by editing the `mirror` host group in the `ansible/inventory/hosts` in this directory and running the playbook below.
+
+	```
+	ansible-playbook playbooks/apt-mirror.yml -i inventory/hosts
+	```
+
+1. Create and set credentials for all nodes for cases where manual login is required to fix networking.  **IMPORTANT!!** if there is a problem with the networking configuration, it is critical to have a "backdoor" into systems if things go wrong.
+
+	```
+	ansible-playbook playbooks/host_credentials.yml
+	```
+
+1. Prepare host networking by determining interfaces and IP addresses, and populating the `ansible/inventory/group_vars/all` with IPs and other variables
+
+	```
+	ansible target-hosts -m shell -a "ip addr show" > all-interfaces.txt
+	
+	cat all-interfaces.txt | grep -v "$(cat all-interfaces.txt | grep 'lo:' -A 3)"
+	```
+
+1. Set up host networking for VLAN tagged interfaces and Linux Bridges.
+	1. One might consider running the below command with the CLI argument: `--skip-tags restart-networking` and manually checking hosts to ensure proper configuration.
+	
+	```
+	ansible-playbook playbooks/configure_networking.yml # --skip-tags restart-networking
+	```
+
+1. Test basic connectivity after network configuration
+	1. Basic Tests
+	
+		```
+		ansible target-hosts -m ping
+		
+		ansible target-hosts -m shell -a "ip a | grep -v 'lo:' -A 3"
+		
+		ansible target-hosts -m shell -a "ifconfig | grep br-mgmt -A 1 | grep inet"
+		
+		# Where X = low range and Y = high range.
+		nmap -sP 172.29.236.X-Y
+		nmap -sP 172.29.240.X-Y
+		nmap -sP 172.29.244.X-Y
+		```
+	1. Further manual testing (Login to a node to test bridges) 
+
+		```
+		interface="br-mgmt" ; subnet="236" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
+		
+		interface="br-vxlan" ; subnet="240" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
+		
+		interface="br-storage" ; subnet="244" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
+		```
+		
 ## Resources
 
 * <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-workflow.html>

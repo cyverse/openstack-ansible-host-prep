@@ -25,11 +25,11 @@ TARGET_HOST_NETWORKING:
     tunnel_vlan_id: 102
     storage_vlan_id: 103
   container_network:
-    subnet: 192.168
-    mgmt_subnet: 100
-    tunnel_subnet: 85
-    storage_subnet: 95
-    netmask: 255.255.255.0
+    subnet: 172.29
+    mgmt_subnet: 236
+    tunnel_subnet: 240
+    storage_subnet: 244
+    netmask: 255.255.252.0
 
 TARGET_HOSTS:
   infra_controle_plane_host1:
