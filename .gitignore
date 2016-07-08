@@ -1,0 +1,4 @@
+.DS_Store
+ansible/ansible.cfg
+ansible/all-interfaces.txt
+openstack_target_host_root_passwords.txt
