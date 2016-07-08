@@ -82,7 +82,7 @@
     - name: enable required kernel modules
       modprobe: name="{{ item }}" state=present
       with_items:
-        - bonding
+        # - bonding
         - 8021q
       tags:
         - kernel
