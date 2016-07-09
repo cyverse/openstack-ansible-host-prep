@@ -4,11 +4,11 @@
   tags: deployment-host 
   tasks:
     - name: Install OSA deploy dependencies
-      apt: name="{{ item }}" state=latest
+      apt: name="{{ item }}" state=latest update_cache=yes
       with_items:
+        - aptitude
         - software-properties-common
         - python-pip
-        - python-dev
         - build-essential
         - libssl-dev
         - libffi-dev
@@ -35,7 +35,7 @@
   hosts: target-hosts
   tasks:
     - name: install OpenStack common tools
-      apt: name={{ item }} state=latest
+      apt: name={{ item }} state=latest update_cache=yes
       with_items:
         - git
         - tmux
@@ -46,7 +46,7 @@
         - install
 
     - name: Install OSA dependencies
-      apt: name="{{ item }}" state=latest
+      apt: name="{{ item }}" state=latest update_cache=yes
       with_items:
         - aptitude
         - build-essential
@@ -63,7 +63,7 @@
       tags: ssh-keys
 
     - name: Install OSA target host dependencies
-      apt: name="{{ item }}" state=latest
+      apt: name="{{ item }}" state=latest update_cache=yes
       with_items:
         - bridge-utils
         - debootstrap
