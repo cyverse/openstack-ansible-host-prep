@@ -101,7 +101,7 @@
 
     - name: print steps to partition disk
       debug: msg="{{ item }}"
-      with_items: PARTITIONING
+      with_items: '{{ PARTITIONING }}'
       run_once: true
       tags:
         - lvm
@@ -113,11 +113,12 @@
         - "pvcreate --metadatasize {{ CINDER_PHYSICAL_VOLUME.metadatasize }}Mg /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}"
         - "vgcreate cinder-volumes /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}"
         # - "vgcreate lxc /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}"
+      when: CINDER_PHYSICAL_VOLUME.create_flag is defined
       tags:
         - lvm
 
     - name: get LVM metadatasize
-      shell: pvs --units m -o pv_mda_count,pv_mda_free,pv_mda_size /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}
+      shell: pvs --units M -o pv_mda_count,pv_mda_free,pv_mda_size /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}
       register: lvm_metadatasize
       tags:
         - lvm

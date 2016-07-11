@@ -60,6 +60,7 @@ TARGET_HOSTS:
 CINDER_PHYSICAL_VOLUME:
   physical_volume: sdb1
   metadatasize: 4096
+  # create_flag: True
 
 PARTITIONING:
   - "/sbin/parted /dev/sdb -s mklabel gpt"
