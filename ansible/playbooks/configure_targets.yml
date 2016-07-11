@@ -117,7 +117,7 @@
         - lvm
 
     - name: get LVM metadatasize
-      shell: pvs --units m -o pv_mda_count,pv_mda_free,pv_mda_size {{ CINDER_PHYSICAL_VOLUME.physical_volume }}
+      shell: pvs --units m -o pv_mda_count,pv_mda_free,pv_mda_size /dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }}
       register: lvm_metadatasize
       tags:
         - lvm
