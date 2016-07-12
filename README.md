@@ -1,6 +1,6 @@
 # CyVerse OpenStack Ansible Deployment
 
-## Deploy OpenStack
+## Prepare for OpenStack Deploy
 
 1. Create `apt-mirror` by editing the `mirror` host group in the `ansible/inventory/hosts` in this directory and running the playbook below.
 
@@ -45,7 +45,7 @@
 		nmap -sP 172.29.244.X-Y
 		```
 	1. Further manual testing (Login to a node to test bridges) 
-
+ 
 		```
 		interface="br-mgmt" ; subnet="236" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
 		
@@ -53,7 +53,78 @@
 		
 		interface="br-storage" ; subnet="244" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
 		```
-		
+1. Manually partition `Block-storage` node's LVM Volume for `cinder`
+
+	```
+	/sbin/parted /dev/sd<device> -s mklabel gpt
+	/sbin/parted /dev/sd<device> -s mkpart primary 0% 100%
+	/sbin/parted /dev/sd<device> -s set 1 lvm on
+	/sbin/parted /dev/sd<device> -s p
+	```
+
+1. Configure and prep all nodes including deployment node for OSA deploy
+	1. If this role is to take care of LVM creation for `cinder-volumes` be sure to enable (i.e. uncomment) the `CINDER_PHYSICAL_VOLUME.create_flag` in `ansible/inventory/group_vars/all`
+
+	```
+	ansible-playbook playbooks/configure_targets.yml
+	```
+
+## Deploy OpenStack using OpenStack Ansible Deployment
+
+1. Login to deployment node, and start filling out the configuration file
+
+	```
+	cd /etc/openstack_deploy/
+	cp openstack_user_config.yml.example openstack_user_config.yml
+	vim openstack_user_config.yml
+	```
+
+1. Follow documentation and configuration files for setting up the cloud here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-networking.html>
+
+1. Organize the hosts for OpenStack in the order defined here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-hostlayout.html>
+	1. It is often helpful to diagram out, or use a table to assign roles for each node.
+1. Begin filling out configuration file with `br-mgmt` IPs for each host to be used.  **DO NOT** use the host's physical IP address.
+1. Fill out `openstack_user_config.yml` and `user_variables.yml`
+1. Generate OpenStack Credentials found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-creds.html>
+
+	```
+	cd /opt/openstack-ansible/scripts
+	python pw-token-gen.py --file /etc/openstack_deploy/user_secrets.yml
+	``` 
+1. Configure HAProxy found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-haproxy.html>
+1. Check syntax of configuration files: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-configurationintegrity.html>
+
+	```
+	cd /opt/openstack-ansible/playbooks/
+	
+	openstack-ansible setup-infrastructure.yml --syntax-check
+	```
+1. If SSH on the hosts are configured with a port other than port `22`, this `~/.ssh/config` must be used
+
+	```
+	Host 172.29.236.19?
+        User root
+        Port 1657
+
+	Host 172.29.236.208
+	        User root
+	        Port 1657
+	
+	Host *
+	        User root
+	        Port 22
+	```
+
+1. Run Foundation Playbook: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-foundation-run.html>
+
+	```
+	openstack-ansible setup-hosts.yml
+	```
+
+## Post-deploy things to do
+
+1. Secure services with SSL: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-sslcertificates.html>
+ 
 ## Resources
 
 * <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-workflow.html>
