@@ -99,16 +99,16 @@
 	
 	openstack-ansible setup-infrastructure.yml --syntax-check
 	```
-1. If SSH on the hosts are configured with a port other than port `22`, this `~/.ssh/config` must be used
+1. If SSH on the hosts are configured with a port other than port `22`, this `~/.ssh/config` must be used.  Replace all fields containining `< >` and `<SSH-PORT>` sections
 
 	```
-	Host 172.29.236.19?
+	Host 172.29.236.<IP-RANGE-HERE>?
         User root
-        Port 1657
+        Port <SSH-PORT>
 
-	Host 172.29.236.208
+	Host 172.29.236.<INDIVIDUAL-IP-HOST-HERE>
 	        User root
-	        Port 1657
+	        Port <SSH-PORT>
 	
 	Host *
 	        User root
