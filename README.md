@@ -121,6 +121,39 @@
 	openstack-ansible setup-hosts.yml
 	```
 
+1. **IMPORTANT** If no hardware load balancer is used (as defined here in this documentation), one must run this `playbook` to configure HAProxy on the Infrastructure Hosts
+
+	```
+	openstack-ansible haproxy-install.yml
+	```
+
+1. Run infrastructure playbook found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-infrastructure-run.html>
+
+	```
+	openstack-ansible setup-infrastructure.yml
+	```
+
+1. Manually verify that the infrastructure was set up correctly (Mainly a verification of Galera): <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-infrastructure-verify.html>
+
+	```
+	lxc-ls | grep galera
+	
+	lxc-attach -n infra1_galera_container-XXXXXXX
+	
+	mysql -u root -p
+	
+	show status like 'wsrep_cluster%';
+	
+	# ^^ That command should display a numeric cluster size equal to the amount of infra-nodes used.
+	```
+
+1. **DO NOT** proceed to this step if the `galera` cluster size is not equal to the amount of infra-nodes used, as it could cause deployment issues.  Be sure to resolve the playbooks above before proceeding to the next step.
+1. Run the `playbook` to setup OpenStack found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-openstack-run.html>
+
+	```
+	openstack-ansible setup-openstack.yml
+	```
+
 ## Post-deploy things to do
 
 1. Secure services with SSL: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-sslcertificates.html>
