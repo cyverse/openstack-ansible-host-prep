@@ -29,6 +29,12 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	ansible --version
 	```
 
+1. If you want to use a separate set of hosts that can be stored elsewhere, one may consider changing line `17` of the `ansible/ansible.cfg` file to point to the host file stored elsewhere.  E.g. 
+
+	```
+	hostfile       = <your-private-repo-here>/ansible/inventory/hosts
+	```
+
 1. Create `apt-mirror` by editing the `mirror` host group in the `ansible/inventory/hosts` in this directory and running the playbook below.
 
 	```
