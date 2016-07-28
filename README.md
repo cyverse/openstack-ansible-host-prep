@@ -35,10 +35,18 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	hostfile       = <your-private-repo-here>/ansible/inventory/hosts
 	```
 
+1. One might consider adding the following to the `~/.ssh/config`
+
+	```
+	Host *
+	   StrictHostKeyChecking no
+	   UserKnownHostsFile=/dev/null
+	```
+
 1. Create `apt-mirror` by editing the `mirror` host group in the `ansible/inventory/hosts` in this directory and running the playbook below.
 
 	```
-	ansible-playbook playbooks/apt-mirror.yml -i inventory/hosts
+	ansible-playbook playbooks/apt-mirror.yml
 	```
 
 1. Create and set credentials for all nodes for cases where manual login is required to fix networking.  **IMPORTANT!!** if there is a problem with the networking configuration, it is critical to have a "backdoor" into systems if things go wrong.
@@ -59,11 +67,11 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	1. One might consider running the below command with the CLI argument: `--skip-tags restart-networking` and manually checking hosts to ensure proper configuration.
 	
 	```
-	ansible-playbook playbooks/configure_networking.yml # --skip-tags restart-networking
+	ansible-playbook playbooks/configure_networking.yml
 	```
 
 1. Test basic connectivity after network configuration
-	1. Basic Tests
+	1. Basic Tests from the node running this code base
 	
 		```
 		ansible target-hosts -m ping
@@ -71,15 +79,16 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 		ansible target-hosts -m shell -a "ip a | grep -v 'lo:' -A 3"
 		
 		ansible target-hosts -m shell -a "ifconfig | grep br-mgmt -A 1 | grep inet"
-		
-		# Where X = low range and Y = high range.
-		nmap -sP 172.29.236.X-Y
-		nmap -sP 172.29.240.X-Y
-		nmap -sP 172.29.244.X-Y
 		```
+		
 	1. Further manual testing (Login to a node to test bridges) 
  
 		```
+		# Where X = low range and Y = high range.
+		X=<low-last-octet-ip>;Y=<high-last-octet-ip>;nmap -sP 172.29.236.${X}-${Y}
+		X=<low-last-octet-ip>;Y=<high-last-octet-ip>;nmap -sP 172.29.240.${X}-${Y}
+		X=<low-last-octet-ip>;Y=<high-last-octet-ip>;nmap -sP 172.29.244.${X}-${Y}
+		
 		interface="br-mgmt" ; subnet="236" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
 		
 		interface="br-vxlan" ; subnet="240" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
