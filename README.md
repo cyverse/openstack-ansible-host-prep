@@ -18,6 +18,16 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 ![Host-Layout](docs/images/environment-overview.png)
 
 ## Prepare for OpenStack Deploy
+1. Create Python `virtualenv`
+
+	```
+	virtualenv liberty
+	source liberty/bin/activate
+	git clone https://github.com/cyverse/openstack-ansible-host-prep.git
+	pip install -r openstack-ansible-host-prep/ansible/requirements.txt
+	# Check for Ansible version 2.1
+	ansible --version
+	```
 
 1. Create `apt-mirror` by editing the `mirror` host group in the `ansible/inventory/hosts` in this directory and running the playbook below.
 
