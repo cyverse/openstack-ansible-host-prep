@@ -1,5 +1,22 @@
 # CyVerse OpenStack Ansible Deployment
 
+## Deployment requirements
+
+Overview: <http://docs.openstack.org/developer/openstack-ansible/install-guide/index.html>
+
+Host layout: <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-hostlayout.html>
+
+### Host Layout
+
+This repository leverages the OSA host layout exactly, execpt for the following differences:
+
+* The `Deployment Host` requires identical host networking as all OSA nodes, so instead of using a separate machine, we suggest that one use on of the `Infrastructure Control Plane Hosts`, i.e. `infra1`
+* Instead of using a hardware load balancer, we use `HAProxy` on the `Infrastructure Control Plane Hosts` which resides on the host-level operating system of those hosts
+* Unfortunately OSA does not deploy `Elasticsearch + Kibana`, and neither does our setup, so if this is wanted, one must implement this separately.
+* We **DO** use the `Block Storage Host`, so account for that.
+
+![Host-Layout](docs/images/environment-overview.png)
+
 ## Prepare for OpenStack Deploy
 
 1. Create `apt-mirror` by editing the `mirror` host group in the `ansible/inventory/hosts` in this directory and running the playbook below.
