@@ -17,6 +17,8 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 
 ![Host-Layout](docs/images/environment-overview.png)
 
+### Host Networking
+
 ## Prepare for OpenStack Deploy
 1. Create Python `virtualenv`
 
@@ -121,20 +123,20 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	vim openstack_user_config.yml
 	```
 
-1. Follow documentation and configuration files for setting up the cloud here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-networking.html>
+1. Follow documentation and configuration files for setting up the cloud here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-networking.html>
 
-1. Organize the hosts for OpenStack in the order defined here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-hostlayout.html>
+1. Organize the hosts for OpenStack in the order defined here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-hostlayout.html>
 	1. It is often helpful to diagram out, or use a table to assign roles for each node.
 1. Begin filling out configuration file with `br-mgmt` IPs for each host to be used.  **DO NOT** use the host's physical IP address.
 1. Fill out `openstack_user_config.yml` and `user_variables.yml`
-1. Generate OpenStack Credentials found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-creds.html>
+1. Generate OpenStack Credentials found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-creds.html>
 
 	```
 	cd /opt/openstack-ansible/scripts
 	python pw-token-gen.py --file /etc/openstack_deploy/user_secrets.yml
 	``` 
-1. Configure HAProxy found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-haproxy.html>
-1. Check syntax of configuration files: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-configurationintegrity.html>
+1. Configure HAProxy found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-haproxy.html#making-haproxy-highly-available>
+1. Check syntax of configuration files: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-configurationintegrity.html>
 
 	```
 	cd /opt/openstack-ansible/playbooks/
@@ -157,7 +159,7 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	        Port 22
 	```
 
-1. Run Foundation Playbook: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-foundation-run.html>
+1. Run Foundation Playbook: <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-foundation.html#running-the-foundation-playbook>
 
 	```
 	openstack-ansible setup-hosts.yml
@@ -169,13 +171,13 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	openstack-ansible haproxy-install.yml
 	```
 
-1. Run infrastructure playbook found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-infrastructure-run.html>
+1. Run infrastructure playbook found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-infrastructure.html#running-the-infrastructure-playbook>
 
 	```
 	openstack-ansible setup-infrastructure.yml
 	```
 
-1. Manually verify that the infrastructure was set up correctly (Mainly a verification of Galera): <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-infrastructure-verify.html>
+1. Manually verify that the infrastructure was set up correctly (Mainly a verification of Galera): <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-infrastructure.html#verify-the-database-cluster>
 
 	```
 	lxc-ls | grep galera
@@ -187,10 +189,15 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	show status like 'wsrep_cluster%';
 	
 	# ^^ That command should display a numeric cluster size equal to the amount of infra-nodes used.
+	
+	OR
+	
+	ansible galera_container -m shell -a "mysql \
+-h localhost -e 'show status like \"%wsrep_cluster_%\";'"
 	```
 
 1. **DO NOT** proceed to this step if the `galera` cluster size is not equal to the amount of infra-nodes used, as it could cause deployment issues.  Be sure to resolve the playbooks above before proceeding to the next step.
-1. Run the `playbook` to setup OpenStack found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-openstack-run.html>
+1. Run the `playbook` to setup OpenStack found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-openstack.html#running-the-openstack-playbook>
 
 	```
 	openstack-ansible setup-openstack.yml
@@ -198,7 +205,7 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 
 ## Post-deploy things to do
 
-1. Secure services with SSL: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-sslcertificates.html>
+1. Secure services with SSL: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-sslcertificates.html>
  
 ## Resources
 
