@@ -86,6 +86,50 @@ nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
 nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
 ```
 
+### Launch an instance with Networkng
+
+1. Login to OpenStack `Horizon` Web-interface defined in the variable `external_lb_vip_address` in the `openstack_user_config.yml` file under the section called `global_overrides`
+1. Grab the login password from the `user_secrets.yml` file listed under `keystone_auth_admin_password`.  Login using `admin` and the `keystone_auth_admin_password `.
+1. Select `Project`, `Compute/Instances`
+1. Select `Launch Instance`
+1. Fill out the following settings:
+
+	```
+	# Details
+	Availability Zone: nova
+	Instance Name: <your-instance-name-here>
+	Flavor: <m1.medium for non-cirros images, m1.small for cirros>
+	Instance Count: 1
+	Instance Boot Source: Boot from image
+	Image Name: <glance image to boot>
+	
+	# Access & Security
+	Click + to add your id_rsa.pub key
+	Security Groups: Select default
+	
+	# Networking
+	Drag "selfservice" network into "Selected networks"
+	
+	Launch
+	
+	# Add Floating IP address
+	Click down-arrow under "Actions" for that launched instance, and select "Associate Floating IP"
+	Click "+" to create a Floating IP allocation
+	Pool: ext-net
+
+	Allocate IP
+	
+	Associate
+	```
+
+1. Verify that instance shows an "Active" status, if not, check all OpenStack Logs by logging into the `Infrastructure Logging Host` and check for errors, like so:
+
+	```
+	cd /openstack/log1_rsyslog_container-<container-id>/log-storage
+
+	tail -n 1000 -f */*.log | grep ERROR
+	```
+
 ## Hardening your cloud
 
 ### OpenStack Ports
