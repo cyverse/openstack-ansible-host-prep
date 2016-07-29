@@ -53,6 +53,39 @@ Follow instructions below from the source here: <http://docs.openstack.org/liber
 +--------------------------------------+--------------+
 	```
 
+### Create OpenStack Neutron Networks
+
+Neutron is configured in OSA to use a HA VRRP L3 agent implemented using Linuxbridge.  In order to get `neutron` working for instance launches so that one can login via a public IP address, some networking is required to get things running.
+
+1. First one must create a flat network, which will allow OpenStack Neutron to use actual network address space on a public or private network in a datacenter or test environment
+1. Once a flat network is created, one must assign a list of non-DHCP assigned addresses that can be used for `floating-ip` addresses.
+1. One must then create a router to route public/private datacenter traffic with the internet as well as OpenStack non-routable private IP address space for OpenStack tenant networks.
+1. Lastly, be sure to configure the OpenStack `security-groups` to allow access to instances from the assigned `floating-ip` address.
+
+Below are steps to create networks as described above:
+
+```
+neutron net-create --provider:physical_network=flat --provider:network_type=flat --router:external=true --shared ext-net
+
+LOW="3";HIGH="254";ROUTER="1";NETWORK="192.168.1";CIDR=".0/24";DNS="8.8.8.8"
+
+neutron subnet-create --name ext-net --allocation-pool start=${NETWORK}.${LOW},end=${NETWORK}.${HIGH}  --dns-nameserver ${DNS} --gateway ${NETWORK}.${ROUTER} ext-net ${NETWORK}${CIDR} --enable_dhcp=False
+
+neutron router-create public_router
+
+neutron router-gateway-set public_router ext-net
+
+neutron net-create selfservice
+
+neutron subnet-create --name selfservice --dns-nameserver ${DNS} --gateway 172.16.1.1 selfservice 172.16.1.0/24
+
+neutron router-interface-add public_router selfservice
+
+nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
+
+nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
+```
+
 ## Hardening your cloud
 
 ### OpenStack Ports
