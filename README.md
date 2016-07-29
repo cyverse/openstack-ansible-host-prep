@@ -209,6 +209,11 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	openstack-ansible setup-openstack.yml
 	```
 
+## What now?
+Now that you have a running cloud, other things need to be set up in order to use OpenStack.
+
+For steps on how to do this, see information in this [document.](docs/What-do-I-do-now.md)
+
 ## Post-deploy things to do
 
 1. Secure services with SSL: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-sslcertificates.html>

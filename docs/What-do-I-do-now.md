@@ -130,6 +130,47 @@ nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
 	tail -n 1000 -f */*.log | grep ERROR
 	```
 
+### Quick Troubleshooting Tips
+
+1. If `Horizon` reports a failure on instance launch because it cannot select a Hypervisor (or says there is not available), check the logs on the for the following message: 
+
+	```
+	Image <glance-image-id> could not be found.
+	```
+	
+	This means that HAProxy sent a request to a `Glance` container which did not have the image requested.  Until something like `glance-irods` is installed and configured, one might want to disable HAProxy for `Glance` to only select the node that has all of the images.
+
+	To fix, this do the following:
+	
+	Login to all `Infrastructure Control Plane Hosts` at once using broadcast input with your favorite terminal, or `tmux` with `setw syncronize-panes on` modify the HAProxy configuration.
+	
+	```
+	cd /etc/haproxy/conf.d/
+	
+	lxc-attach -n infra<LITERAL-TAB>_glance_container-<LITERAL-TAB>
+	
+	cd /var/lib/glance/images/
+	
+	ls -la
+	
+	# Identify the container that contains all the Glance images in it, and take note of this container
+	
+	exit
+	
+	vim glance_registry
+	
+	# Modify the section labeled: "backend glance_registry-back" and comment out the two containers that DO NOT have the correct Glance images on them.
+	
+	# E.g. Where Glance "infra3" contained all Glance images
+	backend glance_registry-back
+	    mode http
+	    balance leastconn
+	    #server infra1_glance_container-<id> 172.29.239.<ip1>:9191 check port 9191 inter 12000 rise 3 fall 3
+	    #server infra2_glance_container-<id> 172.29.238.<ip2>:9191 check port 9191 inter 12000 rise 3 fall 3
+	    server infra3_glance_container-<id> 172.29.239.<ip3>:9191 check port 9191 inter 12000 rise 3 fall 3
+	
+	```
+
 ## Hardening your cloud
 
 ### OpenStack Ports
