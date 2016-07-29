@@ -113,6 +113,12 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	ansible-playbook playbooks/configure_targets.yml
 	```
 
+1. To ensure a easy install, be sure to disable `ufw` or any other firewall like `iptables` on all OpenStack nodes **BEFORE** deploying OSA, as it could cause the install to hang, or fail.
+
+	```
+	ufw disabled
+	```
+
 ## Deploy OpenStack using OpenStack Ansible Deployment
 
 1. Login to deployment node, and start filling out the configuration file
@@ -180,6 +186,11 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 1. Manually verify that the infrastructure was set up correctly (Mainly a verification of Galera): <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-infrastructure.html#verify-the-database-cluster>
 
 	```
+	ansible galera_container -m shell -a "mysql \
+-h localhost -e 'show status like \"%wsrep_cluster_%\";'"
+	
+	OR
+	
 	lxc-ls | grep galera
 	
 	lxc-attach -n infra1_galera_container-XXXXXXX
@@ -189,11 +200,6 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	show status like 'wsrep_cluster%';
 	
 	# ^^ That command should display a numeric cluster size equal to the amount of infra-nodes used.
-	
-	OR
-	
-	ansible galera_container -m shell -a "mysql \
--h localhost -e 'show status like \"%wsrep_cluster_%\";'"
 	```
 
 1. **DO NOT** proceed to this step if the `galera` cluster size is not equal to the amount of infra-nodes used, as it could cause deployment issues.  Be sure to resolve the playbooks above before proceeding to the next step.
