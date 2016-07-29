@@ -1,8 +1,8 @@
 ---
 
-# Comment out this variable if you do not wish to have Ansible set root passwords
-# GENERATE_ROOT_PASSWORDS: True
-# SET_ROOT_PASSWORDS: True
+# Comment out this variable if you do not wish to have Ansible generate and set root passwords
+GENERATE_ROOT_PASSWORDS: True
+SET_ROOT_PASSWORDS: True
 
 TARGET_HOST_PASSWORDS:
   file: openstack_target_host_root_passwords.txt
