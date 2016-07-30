@@ -86,7 +86,18 @@ nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
 nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
 ```
 
-### Launch an instance with Networkng
+For more information on how VRRP works, see these documents:
+
+* <http://docs.openstack.org/liberty/networking-guide/scenario-l3ha-lb.html>
+* <https://wiki.openstack.org/wiki/Neutron/L3_High_Availability_VRRP>
+
+For steps on how to troubleshoot OpenStack Neutron Networking, see these pages:
+
+* <http://docs.openstack.org/ops-guide/ops_network_troubleshooting.html>
+
+### Launch an instance with Networking
+
+#### From Horizon
 
 1. Login to OpenStack `Horizon` Web-interface defined in the variable `external_lb_vip_address` in the `openstack_user_config.yml` file under the section called `global_overrides`
 1. Grab the login password from the `user_secrets.yml` file listed under `keystone_auth_admin_password`.  Login using `admin` and the `keystone_auth_admin_password `.
@@ -122,6 +133,13 @@ nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
 	Associate
 	```
 
+#### From OpenStack CLI
+
+1. <http://docs.openstack.org/liberty/install-guide-ubuntu/launch-instance.html>
+1. <http://docs.openstack.org/liberty/install-guide-ubuntu/launch-instance-private.html>
+
+### Verify Operabilty
+
 1. Verify that instance shows an "Active" status, if not, check all OpenStack Logs by logging into the `Infrastructure Logging Host` and check for errors, like so:
 
 	```
@@ -130,7 +148,22 @@ nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
 	tail -n 1000 -f */*.log | grep ERROR
 	```
 
-### Quick Troubleshooting Tips
+## Adding Compute Nodes
+Once one has verfied that OpenStack is working well with one node, one might need to add additional compute nodes to handle the load from a large amount of users.
+
+In order to do this, one will need to re-run all steps defined on the main `README.md` page while `--limit "<compute-bare-metal-2>,<compute-bare-metal-3>,<compute-bare-metal-4>"` at every step.
+
+Once finished, update the `openstack_user_config.yml` to include the new `used_ips` for those hosts, and add them individually to the `compute_hosts`.
+
+Then run:
+
+```
+openstack-ansible setup-everything.yml --limit "<compute2>,<compute3>,<compute4>"
+```
+
+For more information, see how to do this here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/ops-addcomputehost.html>
+
+## Quick Troubleshooting Tips
 
 1. If `Horizon` reports a failure on instance launch because it cannot select a Hypervisor (or says there is not available), check the logs on the for the following message: 
 
@@ -171,8 +204,30 @@ nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
 	
 	```
 
+1. If all of the `Infrastructure Control Plane Hosts` go down or reboot at once, this will have disasterous affect on Galera MySQL Cluster, as it will likely not recover, and have split-brain issues.  To fix this, follow the steps listed here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/ops-galera-recoverysingle.html>
+
+
 ## Hardening your cloud
 
 ### OpenStack Ports
 
 <http://docs.openstack.org/liberty/config-reference/content/firewalls-default-ports.html>
+
+At this point, all firewalls will be down, so one will need to be sure to configure `ufw` or `iptables` on all the hosts.
+
+## Other Tools
+
+### Other OpenStack Releases
+
+<http://docs.openstack.org/developer/openstack-ansible/>
+
+### IRC Help Forums
+
+<https://wiki.openstack.org/wiki/IRC>
+
+1. To get help, go here: <http://webchat.freenode.net/?channels=openstack-ansible>
+1. Pick a username and chat! 
+
+### RabbitMQ Management Console
+
+<https://www.rabbitmq.com/management.html>

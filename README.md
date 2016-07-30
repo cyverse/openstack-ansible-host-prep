@@ -2,9 +2,13 @@
 
 ## Deployment requirements
 
+**IMPORTANT** Read the pages listed below.
+
 Overview: <http://docs.openstack.org/developer/openstack-ansible/install-guide/index.html>
 
 Host layout: <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-hostlayout.html>
+
+Host networking: <http://docs.openstack.org/developer/openstack-ansible/install-guide/targethosts-network.html>
 
 ### Host Layout
 
