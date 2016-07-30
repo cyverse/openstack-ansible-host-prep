@@ -33,6 +33,7 @@
 
 - name: Prepare All Target Hosts
   hosts: target-hosts
+  tags: target-hosts
   tasks:
     - name: install OpenStack common tools
       apt: name={{ item }} state=latest update_cache=yes
@@ -90,6 +91,7 @@
 
 - name: Prepare Block-Storage Host(s)
   hosts: block-storage
+  tags: block-storage-hosts
   tasks:
     # - name: create the LVM physical volume
     #   lvg: vg={{ item }} pvs=/dev/{{ CINDER_PHYSICAL_VOLUME.physical_volume }} vg_options="--metadatasize {{ CINDER_PHYSICAL_VOLUME.metadatasize }}"
