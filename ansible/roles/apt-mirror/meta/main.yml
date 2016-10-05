@@ -1,22 +1,15 @@
 galaxy_info:
-  author: your name
-  description: your description
-  company: your company (optional)
+  author: Chris Martin but mostly Matt Deporter
+  description: Installs an APT repository mirror for Ubuntu
+  company: CyVerse
 
   # If the issue tracker for your role is not on github, uncomment the
   # next line and provide a value
   # issue_tracker_url: http://example.com/issue/tracker
 
-  # Some suggested licenses:
-  # - BSD (default)
-  # - MIT
-  # - GPLv2
-  # - GPLv3
-  # - Apache
-  # - CC-BY
-  license: license (GPLv2, CC-BY, etc)
+  license: See license.md
 
-  min_ansible_version: 1.2
+  min_ansible_version: 2.x
 
   # Optionally specify the branch Galaxy will use when accessing the GitHub
   # repo for this role. During role install, if no tags are available,
@@ -31,7 +24,7 @@ galaxy_info:
   # the ones that apply to your role. If you don't see your
   # platform on this list, let us know and we'll get it added!
   #
-  #platforms:
+  platforms:
   #- name: EL
   #  versions:
   #  - all
@@ -42,14 +35,14 @@ galaxy_info:
   #  versions:
   #  - all
   #  - any
-  #- name: Solaris
+  #- name: OpenBSD
   #  versions:
   #  - all
-  #  - 10
-  #  - 11.0
-  #  - 11.1
-  #  - 11.2
-  #  - 11.3
+  #  - 5.6
+  #  - 5.7
+  #  - 5.8
+  #  - 5.9
+  #  - 6.0
   #- name: Fedora
   #  versions:
   #  - all
@@ -69,10 +62,27 @@ galaxy_info:
   #  - 12.3
   #  - 13.1
   #  - 13.2
+  #- name: MacOSX
+  #  versions:
+  #  - all
+  #  - 10.10
+  #  - 10.11
+  #  - 10.12
+  #  - 10.7
+  #  - 10.8
+  #  - 10.9
   #- name: IOS
   #  versions:
   #  - all
   #  - any
+  #- name: Solaris
+  #  versions:
+  #  - all
+  #  - 10
+  #  - 11.0
+  #  - 11.1
+  #  - 11.2
+  #  - 11.3
   #- name: SmartOS
   #  versions:
   #  - all
@@ -104,6 +114,7 @@ galaxy_info:
   #  - 10.0
   #  - 10.1
   #  - 10.2
+  #  - 10.3
   #  - 8.0
   #  - 8.1
   #  - 8.2
@@ -114,8 +125,8 @@ galaxy_info:
   #  - 9.1
   #  - 9.2
   #  - 9.3
-  #- name: Ubuntu
-  #  versions:
+  - name: Ubuntu
+    versions:
   #  - all
   #  - lucid
   #  - maverick
@@ -125,11 +136,11 @@ galaxy_info:
   #  - quantal
   #  - raring
   #  - saucy
-  #  - trusty
+    - trusty
   #  - utopic
   #  - vivid
   #  - wily
-  #  - xenial
+    - xenial
   #- name: SLES
   #  versions:
   #  - all
@@ -139,6 +150,9 @@ galaxy_info:
   #  - 11SP1
   #  - 11SP2
   #  - 11SP3
+  #  - 11SP4
+  #  - 12
+  #  - 12SP1
   #- name: GenericLinux
   #  versions:
   #  - all
@@ -158,7 +172,11 @@ galaxy_info:
   #  - stretch
   #  - wheezy
 
-  galaxy_tags: []
+  galaxy_tags:
+    - cyverse
+    - aptmirror
+    - apt
+    - mirror
     # List tags for your role here, one per line. A tag is
     # a keyword that describes and categorizes the role.
     # Users find roles by searching for tags. Be sure to

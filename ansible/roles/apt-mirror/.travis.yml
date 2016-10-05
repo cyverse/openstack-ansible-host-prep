@@ -2,28 +2,55 @@
 language: python
 python: "2.7"
 
-# Use the new container infrastructure
-sudo: false
+sudo: required
+dist: trusty
+services:
+  - docker
 
-# Install ansible
-addons:
-  apt:
-    packages:
-    - python-pip
+env:
+  # - distribution: centos
+  #   version: 7
+  # - distribution: centos
+  #   version: 6
+# No supported/sane way to run Ansible inside a CentOS 5 Docker container;
+#   - distribution: centos
+#     version: 5
+  - distribution: ubuntu
+    version: 16.04
+  - distribution: ubuntu
+    version: 14.04
+  - distribution: ubuntu
+    version: 12.04
 
-install:
-  # Install ansible
-  - pip install ansible
-
-  # Check ansible version
-  - ansible --version
-
-  # Create ansible.cfg with correct roles_path
-  - printf '[defaults]\nroles_path=../' >ansible.cfg
+before_install:
+  - 'sudo docker run -it --name=test_dummy --privileged --detach --volume="${PWD}":/etc/ansible/roles/role_under_test:rw cyverse/ansible-test:latest-${distribution}-${version} bash'
 
 script:
-  # Basic role syntax check
-  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+  # 1. Syntax check
+  - "sudo docker exec test_dummy ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml -i tests/inventory --syntax-check"
+
+  # Not actually running this role because it will download many hundreds of GB!
+
+  # 2. Run playbook to perform updates
+  # - "sudo docker exec test_dummy ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml -i tests/inventory --connection=local"
+
+  # 3. HERE, WRITE SOME TESTS to verify that your role has produced the desired
+  # effect on the target system. Your tests should be bash commands that
+  # complete with an exit status of 0 for a pass, and non-zero for a failure.
+  #
+  # This example tests whether 'hello' exists in /tmp/hello.txt.
+  # - >
+  #   sudo docker exec test_dummy bash -c cat /tmp/hello.txt | grep -q 'hello'
+  #   && (echo 'Test for role result: pass' && exit 0)
+  #   || (echo 'Test for role result: fail' && exit 1)
+
+  # 4. Idempotence test (run playbook again to confirm nothing changes)
+  # - >
+    # sudo docker exec test_dummy ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml -i tests/inventory --connection=local
+    # | grep -q 'changed=0.*failed=0'
+    # && (echo 'Idempotence test: pass' && exit 0)
+    # || (echo 'Idempotence test: fail' && exit 1)
+
 
 notifications:
-  webhooks: https://galaxy.ansible.com/api/v1/notifications/
+    webhooks: https://galaxy.ansible.com/api/v1/notifications/
