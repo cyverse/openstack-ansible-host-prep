@@ -71,6 +71,13 @@
     - mirror
     - apache2
 
+- name: allow port 80 through firewall
+  ufw:
+    rule: allow
+    port: 80
+    proto: tcp
+  tags: firewall
+
 - name: Set MIRROR_HOSTS IP address if MIRROR_HOSTS is not defined
   set_fact:
     MIRROR_HOSTS: "{{ ansible_default_ipv4.address }}"
