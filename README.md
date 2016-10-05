@@ -35,7 +35,7 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	ansible --version
 	```
 
-1. If you want to use a separate set of hosts that can be stored elsewhere, one may consider changing line `17` of the `ansible/ansible.cfg` file to point to the host file stored elsewhere.  E.g. 
+1. If you want to use a separate set of hosts that can be stored elsewhere, one may consider changing line `17` of the `ansible/ansible.cfg` file to point to the host file stored elsewhere.  E.g.
 
 	```
 	hostfile       = <your-private-repo-here>/ansible/inventory/hosts
@@ -49,7 +49,9 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	   UserKnownHostsFile=/dev/null
 	```
 
-1. Create `apt-mirror` by editing the `mirror` host group in the `ansible/inventory/hosts` in this directory and running the playbook below.
+1. ~~Create `apt-mirror` by editing the `mirror` host group in the `ansible/inventory/hosts` in this directory and running the playbook below.~~
+
+This role currently deploys a broken sources.list to the target hosts. Skip this step until the role is fixed.
 
 	```
 	ansible-playbook playbooks/apt-mirror.yml
@@ -65,40 +67,40 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 
 	```
 	ansible target-hosts -m shell -a "ip addr show" > all-interfaces.txt
-	
+
 	cat all-interfaces.txt | grep -v "$(cat all-interfaces.txt | grep 'lo:' -A 3)"
 	```
 
 1. Set up host networking for VLAN tagged interfaces and Linux Bridges.
 	1. One might consider running the below command with the CLI argument: `--skip-tags restart-networking` and manually checking hosts to ensure proper configuration.
-	
+
 	```
 	ansible-playbook playbooks/configure_networking.yml
 	```
 
 1. Test basic connectivity after network configuration
 	1. Basic Tests from the node running this code base
-	
+
 		```
 		ansible target-hosts -m ping
-		
+
 		ansible target-hosts -m shell -a "ip a | grep -v 'lo:' -A 3"
-		
+
 		ansible target-hosts -m shell -a "ifconfig | grep br-mgmt -A 1 | grep inet"
 		```
-		
-	1. Further manual testing (Login to a node to test bridges) 
- 
+
+	1. Further manual testing (Login to a node to test bridges)
+
 		```
 		# Where X = low range and Y = high range.
 		X=<low-last-octet-ip>;Y=<high-last-octet-ip>;nmap -sP 172.29.236.${X}-${Y}
 		X=<low-last-octet-ip>;Y=<high-last-octet-ip>;nmap -sP 172.29.240.${X}-${Y}
 		X=<low-last-octet-ip>;Y=<high-last-octet-ip>;nmap -sP 172.29.244.${X}-${Y}
-		
+
 		interface="br-mgmt" ; subnet="236" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
-		
+
 		interface="br-vxlan" ; subnet="240" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
-		
+
 		interface="br-storage" ; subnet="244" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
 		```
 1. Manually partition `Block-storage` node's LVM Volume for `cinder`
@@ -144,13 +146,13 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	```
 	cd /opt/openstack-ansible/scripts
 	python pw-token-gen.py --file /etc/openstack_deploy/user_secrets.yml
-	``` 
+	```
 1. Configure HAProxy found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-haproxy.html#making-haproxy-highly-available>
 1. Check syntax of configuration files: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-configurationintegrity.html>
 
 	```
 	cd /opt/openstack-ansible/playbooks/
-	
+
 	openstack-ansible setup-infrastructure.yml --syntax-check
 	```
 1. If SSH on the hosts are configured with a port other than port `22`, this `~/.ssh/config` must be used.  Replace all fields containining `< >` and `<SSH-PORT>` sections
@@ -163,7 +165,7 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	Host 172.29.236.<INDIVIDUAL-IP-HOST-HERE>
 	        User root
 	        Port <SSH-PORT>
-	
+
 	Host *
 	        User root
 	        Port 22
@@ -192,17 +194,17 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	```
 	ansible galera_container -m shell -a "mysql \
 -h localhost -e 'show status like \"%wsrep_cluster_%\";'"
-	
+
 	OR
-	
+
 	lxc-ls | grep galera
-	
+
 	lxc-attach -n infra1_galera_container-XXXXXXX
-	
+
 	mysql -u root -p
-	
+
 	show status like 'wsrep_cluster%';
-	
+
 	# ^^ That command should display a numeric cluster size equal to the amount of infra-nodes used.
 	```
 
@@ -221,7 +223,7 @@ For steps on how to do this, see information in this [document.](docs/What-do-I-
 ## Post-deploy things to do
 
 1. Secure services with SSL: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-sslcertificates.html>
- 
+
 ## Resources
 
 * <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-workflow.html>
@@ -369,11 +371,11 @@ br-vlan | Unnumbered | eth{secondary} | Yes
 ### Physical Interfaces Files
 
 * /etc/network/interfaces
-	
+
 	```
 	auto lo
 	iface lo inet loopback
-		
+
 	source /etc/network/interfaces.d/*
 	```
 
@@ -413,7 +415,7 @@ br-vlan | Unnumbered | eth{secondary} | Yes
 	iface eth{primary}.102 inet manual
 	  vlan-raw-device eth{secondary}
 	```
-	
+
 * /etc/network/interfaces.d/device-bridges
 
 	```
@@ -428,7 +430,7 @@ br-vlan | Unnumbered | eth{secondary} | Yes
 		address 192.168.100.10
 		netmask 255.255.255.0
 		dns-nameservers 8.8.8.8
-	
+
 	# OpenStack Networking VXLAN (tunnel/overlay) bridge
 	auto br-vxlan
 	iface br-vxlan inet static
@@ -439,7 +441,7 @@ br-vlan | Unnumbered | eth{secondary} | Yes
 		bridge_ports eth{primary}.102
 		address 192.168.95.10
 		netmask 255.255.255.0
-	
+
 	# OpenStack Networking VLAN bridge
 	auto br-vlan
 		iface br-vlan inet manual
@@ -448,7 +450,7 @@ br-vlan | Unnumbered | eth{secondary} | Yes
 		bridge_fd 0
 		# Bridge port references untagged interface
 		bridge_ports eth{secondary}
-	
+
 	# Storage bridge (optional)
 	auto br-storage
 	iface br-storage inet static
@@ -474,33 +476,33 @@ infra_control_plane_host | eth{primary} | 10.1.1.10 | N/A
  | br-vlan | Unnumbered | eth{secondary}
  | eth{secondary} | Unnumbered | N/A
  | infra1_container | 192.168.100.10 | br-mgmt
- 
+
 ## Configure Targets
 
 1. Install package dependencies
 	1. In this repo, use `configure_targets.yml` playbook
-		
+
 		```
 		ansible-playbook configure_targets.yml -e "SSH_PUBLIC_KEY='ssh-rsa AAAA...'"
 		```
-		
+
 1. Set up NTP
 
 ## Set up Deployment Host
 
 1. Find the latest stable TAG: <https://github.com/openstack/openstack-ansible/releases> and verify that the selected tag corresponds with the version of OS one wishes to deploy.  One may see something similar to this: `meta:series: liberty` in the release notes.
 1. Clone repo on deploy host (This can be done via Ansible, or on one of the "Infrastructure Control Plane Host")
-	
+
 	```
 	git clone -b 12.0.9 https://github.com/openstack/openstack-ansible.git /opt/openstack-ansible
 	```
-	
+
 1. Run bootstrap
 
 	```
 	cd /opt/openstack-ansible
 	scripts/bootstrap-ansible.sh
-	```	
+	```
 
 ## Prepare Target Hosts
 
@@ -512,21 +514,21 @@ Re-run Ansible Playbook to include changes for block-storage node
 	cd ansible
 	ansible-playbook playbooks/host_credentials.yml
 	```
-	
+
 1. Configure Bare-Metal host networking for OSA setup (VLAN tagged interfaces and LinuxBridges).  At this point, you MUST modify the `hosts` file AND `group_vars/all` variables under `TARGET_HOST_NETWORKING`, `TARGET_HOSTS` and `CINDER_PHYSICAL_VOLUME` sections.
 
 	```
 	ansible-playbook playbooks/configure_networking.yml
 	```
-	
+
 1. Run Playbook to set up an Ubuntu `apt-mirror` using a completely separate host (could use a target-host, but it is not recommended)
 
 	```
 	ansible-playbook playbooks/apt-mirror.yml --skip-tags "update"
-	
+
 	Manually execute the command below on apt-mirror host, since it could take a very long time (upwards of 4 hours)
-	
-	su - apt-mirror -c apt-mirror	
+
+	su - apt-mirror -c apt-mirror
 	```
 
 1. Prepare hosts for OSA Deployment.  This Playbook configures the Deployment host AND OSA Target-hosts.  (Ensure that `hosts` and `group_vars/all` are filled out and accurate)
@@ -534,7 +536,7 @@ Re-run Ansible Playbook to include changes for block-storage node
 	```
 	ansible-playbook playbooks/configure_targets.yml
 	```
-	
+
 1. Manually copy and enable configuration file for OSA
 
 	```
