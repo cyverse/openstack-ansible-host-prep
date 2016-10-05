@@ -4,6 +4,8 @@ APT Mirror
 Configures an APT mirror for Ubuntu 14.04 or 16.04. Mirrors packages for the major distro version of the host that you install the APT mirror on. Also deploys a new sources.list
 to another group of target hosts.
 
+Currently broken in that hosts which use this APT mirror won't be able to download repositories specifically marked as amd64 architecture. Will fix later.
+
 Intended to be used as part of https://github.com/cyverse/openstack-ansible-host-prep, may not work on its own yet. Also missing some documentation -- work in progress.
 
 [![Build Status](https://travis-ci.org/CyVerse-Ansible/ansible-apt-mirror.svg?branch=master)](https://travis-ci.org/CyVerse-Ansible/ansible-apt-mirror)

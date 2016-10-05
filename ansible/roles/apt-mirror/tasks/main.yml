@@ -47,6 +47,11 @@
   tags:
     - update
 
+- name: cron file to update mirror every day
+  copy:
+    src: apt-mirror
+    dest: /etc/cron.d/apt-mirror
+
 - name: configure web endpoint for mirror
   file: src={{ item.src }} dest={{ item.dest }} state=link
   with_items: '{{ MIRROR.repo_path }}'
