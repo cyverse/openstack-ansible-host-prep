@@ -6,9 +6,9 @@
 
 Overview: <http://docs.openstack.org/developer/openstack-ansible/install-guide/index.html>
 
-Host layout: <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-hostlayout.html>
+Host layout: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-hostlayout.html>
 
-Host networking: <http://docs.openstack.org/developer/openstack-ansible/install-guide/targethosts-network.html>
+Host networking: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-hostnetworking.html>
 
 ### Host Layout
 
@@ -41,7 +41,17 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	hostfile       = <your-private-repo-here>/ansible/inventory/hosts
 	```
 
-1. One might consider adding the following to the `~/.ssh/config`
+1. Prepare host networking by determining interfaces and IP addresses, and populating the `ansible/inventory/group_vars/all` with IPs and other variables. If you are storing your hosts file somewhere else, consider moving the group_vars folder, storing it alongside your hosts file.
+
+You can use the following commands to retrieve the network interfaces and IP addresses of your target hosts, for reference:
+
+	```
+	ansible target-hosts -m shell -a "ip addr show" > all-interfaces.txt
+
+	cat all-interfaces.txt | grep -v "$(cat all-interfaces.txt | grep 'lo:' -A 3)"
+	```
+
+1. One might consider adding the following to the `~/.ssh/config`, but only if you don't care about security.
 
 	```
 	Host *
@@ -61,14 +71,6 @@ This role currently deploys a broken sources.list to the target hosts. Skip this
 
 	```
 	ansible-playbook playbooks/host_credentials.yml
-	```
-
-1. Prepare host networking by determining interfaces and IP addresses, and populating the `ansible/inventory/group_vars/all` with IPs and other variables
-
-	```
-	ansible target-hosts -m shell -a "ip addr show" > all-interfaces.txt
-
-	cat all-interfaces.txt | grep -v "$(cat all-interfaces.txt | grep 'lo:' -A 3)"
 	```
 
 1. Set up host networking for VLAN tagged interfaces and Linux Bridges.
@@ -96,6 +98,8 @@ This role currently deploys a broken sources.list to the target hosts. Skip this
 		X=<low-last-octet-ip>;Y=<high-last-octet-ip>;nmap -sP 172.29.236.${X}-${Y}
 		X=<low-last-octet-ip>;Y=<high-last-octet-ip>;nmap -sP 172.29.240.${X}-${Y}
 		X=<low-last-octet-ip>;Y=<high-last-octet-ip>;nmap -sP 172.29.244.${X}-${Y}
+
+    # For the following, remove/add `172.29.${subnet}.Z` as needed if your IP range is non-contiguous
 
 		interface="br-mgmt" ; subnet="236" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
 
