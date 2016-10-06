@@ -32,8 +32,8 @@
         name: "{{ item }}"
         state: installed
       with_items:
-        - python-pip=8.1.1-2
         - python-pip-whl=8.1.1-2
+        - python-pip=8.1.1-2
 
 
     - name: Run OSA bootstrap script
