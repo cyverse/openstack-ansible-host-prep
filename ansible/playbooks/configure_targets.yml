@@ -24,10 +24,14 @@
 
     # The following task is a workaround for this bug:
     # https://bugs.launchpad.net/openstack-ansible/+bug/1612377
+    # https://bugs.launchpad.net/ubuntu/+source/salt/+bug/1586381
     # It will go away when we upgrade to Mitaka/Newton
     # Also, why are we apparently running PIP outside of a virtual environment?
     - name: Downgrade to pip 8.1.1 prior to running bootstrap script
-      shell: pip install pip==8.1.1
+      apt:
+        name: pip=8.1.1-2
+        state: installed
+
 
     - name: Run OSA bootstrap script
       shell: cd /opt/openstack-ansible && scripts/bootstrap-ansible.sh
