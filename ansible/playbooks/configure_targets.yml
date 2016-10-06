@@ -29,8 +29,11 @@
     # Also, why are we apparently running PIP outside of a virtual environment?
     - name: Downgrade to pip 8.1.1 prior to running bootstrap script
       apt:
-        name: python-pip=8.1.1-2
+        name: "{{ item }}"
         state: installed
+      with_items:
+        - python-pip=8.1.1-2
+        - python-pip-whl=8.1.1-2
 
 
     - name: Run OSA bootstrap script
