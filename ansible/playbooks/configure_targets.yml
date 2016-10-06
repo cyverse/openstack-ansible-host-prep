@@ -1,7 +1,7 @@
 ---
 - name: Configure Deployment Host
   hosts: deployment-host
-  tags: deployment-host 
+  tags: deployment-host
   tasks:
     - name: Install OSA deploy dependencies
       apt: name="{{ item }}" state=latest update_cache=yes
@@ -22,6 +22,13 @@
            clone=yes
            version="{{ OSA_VERSION }}"
 
+    # The following task is a workaround for this bug:
+    # https://bugs.launchpad.net/openstack-ansible/+bug/1612377
+    # It will go away when we upgrade to Mitaka/Newton
+    # Also, why are we apparently running PIP outside of a virtual environment?
+    - name: Downgrade to pip 8.1.1 prior to running bootstrap script
+      shell: pip install pip==8.1.1
+
     - name: Run OSA bootstrap script
       shell: cd /opt/openstack-ansible && scripts/bootstrap-ansible.sh
 
@@ -29,7 +36,7 @@
       shell: rsync -av /opt/openstack-ansible/etc/openstack_deploy /etc/
       # syncronize: src=/opt/openstack-ansible/etc/openstack_deploy dest=/etc/ archive=yes
 
-    - debug: msg="Manually copy over new config by running 'cd /etc/openstack_deploy/ && cp openstack_user_config.yml.example openstack_user_config.yml'" 
+    - debug: msg="Manually copy over new config by running 'cd /etc/openstack_deploy/ && cp openstack_user_config.yml.example openstack_user_config.yml'"
 
 - name: Prepare All Target Hosts
   hosts: target-hosts
@@ -80,6 +87,7 @@
         - vlan
       tags: install
 
+    # I suspect this isn't needed, handled in configure_networking.yml
     - name: enable required kernel modules
       modprobe: name="{{ item }}" state=present
       with_items:
