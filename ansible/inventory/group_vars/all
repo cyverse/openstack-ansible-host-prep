@@ -19,6 +19,7 @@ TARGET_HOST_NETWORKING:
     gateway: 10.1.1.1
     netmask: 255.255.255.0
     network: 10.1.1.0
+    # Separate DNS servers with spaces
     dns_servers: 8.8.8.8
     dns_search: domain.com
     container_vlan_id: 101
