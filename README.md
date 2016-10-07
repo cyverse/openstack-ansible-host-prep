@@ -27,9 +27,9 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 1. Create Python `virtualenv`
 
 	```
-	virtualenv liberty
-	source liberty/bin/activate
-	git clone https://github.com/cyverse/openstack-ansible-host-prep.git
+	virtualenv osa-venv
+	source osa-venv/bin/activate
+	git clone https://github.com/c-mart/openstack-ansible-host-prep.git
 	pip install -r openstack-ansible-host-prep/ansible/requirements.txt
 	# Check for Ansible version 2.1
 	ansible --version
@@ -126,7 +126,7 @@ This role currently deploys a broken sources.list to the target hosts. Skip this
 1. To ensure a easy install, be sure to disable `ufw` or any other firewall like `iptables` on all OpenStack nodes **BEFORE** deploying OSA, as it could cause the install to hang, or fail.
 
 	```
-	ufw disabled
+	ansible target-hosts -m shell -a "ufw disable"
 	```
 
 ## Deploy OpenStack using OpenStack Ansible Deployment
@@ -139,20 +139,20 @@ This role currently deploys a broken sources.list to the target hosts. Skip this
 	vim openstack_user_config.yml
 	```
 
-1. Follow documentation and configuration files for setting up the cloud here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-networking.html>
+1. Follow documentation and configuration files for setting up the cloud here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-networking.html>
 
-1. Organize the hosts for OpenStack in the order defined here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-hostlayout.html>
+1. Organize the hosts for OpenStack in the order defined here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-hostlayout.html>
 	1. It is often helpful to diagram out, or use a table to assign roles for each node.
 1. Begin filling out configuration file with `br-mgmt` IPs for each host to be used.  **DO NOT** use the host's physical IP address.
 1. Fill out `openstack_user_config.yml` and `user_variables.yml`
-1. Generate OpenStack Credentials found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-creds.html>
+1. Generate OpenStack Credentials found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-creds.html>
 
 	```
 	cd /opt/openstack-ansible/scripts
 	python pw-token-gen.py --file /etc/openstack_deploy/user_secrets.yml
 	```
-1. Configure HAProxy found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-haproxy.html#making-haproxy-highly-available>
-1. Check syntax of configuration files: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-configurationintegrity.html>
+1. Configure HAProxy found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-haproxy.html#making-haproxy-highly-available>
+1. Check syntax of configuration files: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-configurationintegrity.html>
 
 	```
 	cd /opt/openstack-ansible/playbooks/
@@ -175,7 +175,12 @@ This role currently deploys a broken sources.list to the target hosts. Skip this
 	        Port 22
 	```
 
-1. Run Foundation Playbook: <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-foundation.html#running-the-foundation-playbook>
+1. Hosts file
+
+1. Run Foundation Playbook: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-foundation.html#running-the-foundation-playbook>
+
+For Ubuntu 16.04 with OSA version 12.0.10 this will fail on loading the nonexistent "scsi_dh" kernel module. Remove `- scsi_dh` from /opt/openstack-ansible/playbooks/roles/openstack_hosts/defaults/main.yml
+
 
 	```
 	openstack-ansible setup-hosts.yml
