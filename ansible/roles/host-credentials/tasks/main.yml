@@ -111,10 +111,11 @@
     - ssh-keys
     - ssh-keys-distribute
 
-- name: copy master's private key to all hosts
-  copy: src=/tmp/id_rsa dest=~/.ssh/id_rsa mode=0600
-  tags:
-    - ssh-keys
+# I don't think this is good security
+# - name: copy master's private key to all hosts
+#   copy: src=/tmp/id_rsa dest=~/.ssh/id_rsa mode=0600
+#   tags:
+#     - ssh-keys
 
 - name: remove temp local pubkey copies
   local_action: file dest="/tmp/{{ item }}" state=absent
