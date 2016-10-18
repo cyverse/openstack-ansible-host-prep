@@ -17,3 +17,5 @@ APACHE:
   sites_enabled: /etc/apache2/sites-enabled
   conf: apt-mirror.conf
   service: apache2
+
+distro_nickname: xenial

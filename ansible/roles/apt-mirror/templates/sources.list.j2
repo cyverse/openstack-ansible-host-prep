@@ -1,26 +1,5 @@
-# 
+#
 
-# deb [ arch=amd64 ] cdrom:[Ubuntu-Server 14.04.3 LTS _Trusty Tahr_ - Beta amd64 (20150805)]/ trusty main restricted
-
-#deb [ arch=amd64 ] cdrom:[Ubuntu-Server 14.04.3 LTS _Trusty Tahr_ - Beta amd64 (20150805)]/ trusty main restricted
-
-# See http://help.ubuntu.com/community/UpgradeNotes for how to upgrade to
-# newer versions of the distribution.
-
-deb [ arch=amd64 ] http://{{ MIRROR_HOSTS }}/ubuntu trusty main restricted universe
-deb [ arch=amd64 ] http://{{ MIRROR_HOSTS }}/ubuntu trusty-updates main restricted universe
-deb [ arch=amd64 ] http://{{ MIRROR_HOSTS }}/security trusty-security main restricted universe multiverse
-
-## Uncomment the following two lines to add software from Canonical's
-## 'partner' repository.
-## This software is not part of Ubuntu, but is offered by Canonical and the
-## respective vendors as a service to Ubuntu users.
-# deb [ arch=amd64 ] http://archive.canonical.com/ubuntu trusty partner
-# deb-src [ arch=amd64 ] http://archive.canonical.com/ubuntu trusty partner
-
-## Uncomment the following two lines to add software from Ubuntu's
-## 'extras' repository.
-## This software is not part of Ubuntu, but is offered by third-party
-## developers who want to ship their latest software.
-# deb [ arch=amd64 ] http://extras.ubuntu.com/ubuntu trusty main
-# deb-src [ arch=amd64 ] http://extras.ubuntu.com/ubuntu trusty main
+deb [ arch=amd64 ] http://{{ MIRROR_HOSTS }}/ubuntu {{ distro_nickname }} main restricted universe
+deb [ arch=amd64 ] http://{{ MIRROR_HOSTS }}/ubuntu {{ distro_nickname }}-updates main restricted universe
+deb [ arch=amd64 ] http://{{ MIRROR_HOSTS }}/security {{ distro_nickname }}-security main restricted universe multiverse

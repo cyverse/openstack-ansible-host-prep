@@ -1,0 +1,5 @@
+---
+# Roles imported from Ansible galaxy
+
+- src: CyVerse-Ansible.apt-mirror
+  name: apt-mirror

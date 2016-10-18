@@ -1,6 +1,6 @@
 ---
 [deployment-host]
-infra_controle_plane_host1 ansible_host=10.1.1.10 ansible_port=22
+infra_control_plane_host1 ansible_host=10.1.1.10 ansible_port=22
 
 [target-hosts:children]
 infrastructure-control-plane
@@ -9,12 +9,12 @@ compute
 block-storage
 
 [infrastructure-control-plane]
-infra_controle_plane_host1 ansible_host=10.1.1.10 ansible_port=22
-infra_controle_plane_host2 ansible_host=10.1.1.11 ansible_port=22
-infra_controle_plane_host3 ansible_host=10.1.1.12 ansible_port=22
+infra_control_plane_host1 ansible_host=10.1.1.10 ansible_port=22
+infra_control_plane_host2 ansible_host=10.1.1.11 ansible_port=22
+infra_control_plane_host3 ansible_host=10.1.1.12 ansible_port=22
 
 [logging]
-infra_controle_plane_host4 ansible_host=10.1.1.13 ansible_port=22
+infra_control_plane_host4 ansible_host=10.1.1.13 ansible_port=22
 
 [block-storage]
 infra_storage1 ansible_host=10.1.1.14 ansible_port=22

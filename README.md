@@ -1,104 +1,125 @@
-# CyVerse OpenStack Ansible Deployment
+# OpenStack Ansible Host Prep
+
+The [OpenStack-Ansible](http://docs.openstack.org/developer/openstack-ansible/) project has [specific requirements](http://docs.openstack.org/developer/openstack-ansible/newton/install-guide/overview-requirements.html) for host layout and networking. This project, OSA Host Prep, automates most of this required configuration, prior to running OpenStack Ansible.
+
+This is confirmed working for OpenStack Newton on Ubuntu 16.04. Your mileage may vary if you try deploying other versions/distros.
+
+## Issues/todo/questions
+- APT mirror role is broken for Ubuntu 16.04 but not needed at all (just makes the deployment faster). Either fix APT mirror role or rip it out as it's not strictly needed.
+- Why do we "copy master's private key to all hosts" in the host-credentials role? This seems to violate the security guideline of not spreading SSH private keys to other hosts.
+- We should not disable host key checking. learn host keys from MAAS
+- Perhaps automate the process of manually connecting to each host, accepting the initial host key (checking against host key from MAAS installation), and copying deployer's public key to /root/.ssh/authorized_keys
+- Document how to populate TARGET_HOSTS dictionary of group_vars/all
+- I think APT mirror role is overloaded, there should be a separate role/task to deploy sources.list to the target hosts, then APT mirror role can be Galaxy-ized
+- Give the host groups a consistent naming convention
+- Automate some manual steps: the network connectivity testing, the partitioning of the LVM volume on the cinder node, and the disabling of the firewall
+- Why does OpenStack recommend a hardware load balancer for production? The HAProxy+keepalived arrangement seems fine.
 
 ## Deployment requirements
 
-**IMPORTANT** Read the pages listed below.
+This Ansible code will handle most of OSA's requirements, but you should still familiarize yourself with the host layout and networking requirements.
 
-Overview: <http://docs.openstack.org/developer/openstack-ansible/install-guide/index.html>
-
-Host layout: <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-hostlayout.html>
-
-Host networking: <http://docs.openstack.org/developer/openstack-ansible/install-guide/targethosts-network.html>
+Overview: <http://docs.openstack.org/developer/openstack-ansible/newton/install-guide/overview.html>
+Installation requirements: <http://docs.openstack.org/developer/openstack-ansible/newton/install-guide/overview-requirements.html>
 
 ### Host Layout
 
 This repository leverages the OSA host layout exactly, execpt for the following differences:
 
-* The `Deployment Host` requires identical host networking as all OSA nodes, so instead of using a separate machine, we suggest that one use on of the `Infrastructure Control Plane Hosts`, i.e. `infra1`
-* Instead of using a hardware load balancer, we use `HAProxy` on the `Infrastructure Control Plane Hosts` which resides on the host-level operating system of those hosts
-* Unfortunately OSA does not deploy `Elasticsearch + Kibana`, and neither does our setup, so if this is wanted, one must implement this separately.
-* We **DO** use the `Block Storage Host`, so account for that.
+* The `Deployment Host` requires identical host networking as all OSA nodes, so instead of using a separate machine, we use one of the `Infrastructure Control Plane Hosts`, i.e. `infra1`.
+* Instead of a hardware load balancer, we use HAProxy and Keepalived on the `Infrastructure Control Plane Hosts` which resides on the host-level operating system of those hosts
+* OSA does not deploy `Elasticsearch + Kibana`, and neither does this project. This is not required, but if desired, it must be implemented separately.
+* We DO use the `Block Storage Host`, so account for that.
 
 ![Host-Layout](docs/images/environment-overview.png)
 
 ### Host Networking
 
-## Prepare for OpenStack Deploy
-1. Create Python `virtualenv`
+Host networking: <http://docs.openstack.org/developer/openstack-ansible/newton/install-guide/overview-network-arch.html>
 
-	```
-	virtualenv liberty
-	source liberty/bin/activate
-	git clone https://github.com/cyverse/openstack-ansible-host-prep.git
-	pip install -r openstack-ansible-host-prep/ansible/requirements.txt
-	# Check for Ansible version 2.1
-	ansible --version
-	```
+Configuring the switching fabric between hosts is up to you, but is straightforward. Suggestions:
+- Three VLANs for the networks required for OSA (container management, tunneling, and storage)
+- Another (perhaps untagged) VLAN for the host management network. The HAProxy external IP address, which provides access to Horizon Dashboard and API endpoints, can also use this subnet.
+- Identical switchport configurations for each host
 
-1. If you want to use a separate set of hosts that can be stored elsewhere, one may consider changing line `17` of the `ansible/ansible.cfg` file to point to the host file stored elsewhere.  E.g. 
+## Deployment Guide
+
+### Prepare for OpenStack Deploy
+
+1. Get Ansible on your deployment host
+```
+$ sudo su
+$ apt-get install software-properties-common
+$ apt-add-repository ppa:ansible/ansible
+$ apt-get update
+$ apt-get install ansible
+```
+
+Ensure that you can SSH to all of the target hosts using SSH key authentication, and that you have accepted their host keys into your known_hosts file. In other words, generate an SSH keypair on your deployment host, copy it to each of the target hosts' authorized_keys files, and test passwordless SSH connection from the deployment host to each target hosts.
+
+1. Clone this repo to your deployment host, and populate the Ansible inventory file (`ansible/hosts`) with the actual hostnames and IP addresses of your target hosts. If you want to use a separate inventory file that is stored elsewhere, change line `17` of the `ansible/ansible.cfg` file to point to that host file, e.g.:
 
 	```
 	hostfile       = <your-private-repo-here>/ansible/inventory/hosts
 	```
 
-1. One might consider adding the following to the `~/.ssh/config`
+1. Prepare host networking by determining interfaces and IP addresses, and populating the `ansible/inventory/group_vars/all` with IPs and other variables. If you are storing your hosts file somewhere else, consider moving the group_vars folder, storing it alongside your hosts file.
+
+You can use the following commands to retrieve the network interfaces and IP addresses of your target hosts, for reference:
 
 	```
-	Host *
-	   StrictHostKeyChecking no
-	   UserKnownHostsFile=/dev/null
+	ansible target-hosts -m shell -a "ip addr show" > all-interfaces.txt
+
+	cat all-interfaces.txt | grep -v "$(cat all-interfaces.txt | grep 'lo:' -A 3)"
 	```
 
-1. Create `apt-mirror` by editing the `mirror` host group in the `ansible/inventory/hosts` in this directory and running the playbook below.
+1. Set OSA_VERSION in group_vars/all to the appropriate branch or tag of the Openstack-Ansible project, or leave the default.
+
+
+1. ~~Create `apt-mirror` by editing the `mirror` host group in the `ansible/inventory/hosts` in this directory and running the playbook below.~~ This role currently deploys a broken sources.list to target hosts running Ubuntu 16.04. Skip this step until the role is fixed. An APT mirror is not strictly required.
 
 	```
 	ansible-playbook playbooks/apt-mirror.yml
 	```
 
-1. Create and set credentials for all nodes for cases where manual login is required to fix networking.  **IMPORTANT!!** if there is a problem with the networking configuration, it is critical to have a "backdoor" into systems if things go wrong.
+1. Create and set credentials for all nodes for cases where manual console login is required to fix networking. (If there is a problem with the networking configuration, you need a "backdoor" into systems.)
 
 	```
 	ansible-playbook playbooks/host_credentials.yml
 	```
 
-1. Prepare host networking by determining interfaces and IP addresses, and populating the `ansible/inventory/group_vars/all` with IPs and other variables
-
-	```
-	ansible target-hosts -m shell -a "ip addr show" > all-interfaces.txt
-	
-	cat all-interfaces.txt | grep -v "$(cat all-interfaces.txt | grep 'lo:' -A 3)"
-	```
-
 1. Set up host networking for VLAN tagged interfaces and Linux Bridges.
-	1. One might consider running the below command with the CLI argument: `--skip-tags restart-networking` and manually checking hosts to ensure proper configuration.
-	
+	1. One might consider running the below command with the CLI argument: `--skip-tags restart-networking` and manually checking hosts to ensure proper configuration, then running `ansible target-hosts -m shell -a "ifdown -a && ifup -a"` to bounce the interfaces.
+
 	```
 	ansible-playbook playbooks/configure_networking.yml
 	```
 
 1. Test basic connectivity after network configuration
-	1. Basic Tests from the node running this code base
-	
+	1. Basic Tests from the deployment host
+
 		```
 		ansible target-hosts -m ping
-		
+
 		ansible target-hosts -m shell -a "ip a | grep -v 'lo:' -A 3"
-		
+
 		ansible target-hosts -m shell -a "ifconfig | grep br-mgmt -A 1 | grep inet"
 		```
-		
-	1. Further manual testing (Login to a node to test bridges) 
- 
+
+	1. Further manual testing (Login to a node to test bridges)
+
 		```
 		# Where X = low range and Y = high range.
 		X=<low-last-octet-ip>;Y=<high-last-octet-ip>;nmap -sP 172.29.236.${X}-${Y}
 		X=<low-last-octet-ip>;Y=<high-last-octet-ip>;nmap -sP 172.29.240.${X}-${Y}
 		X=<low-last-octet-ip>;Y=<high-last-octet-ip>;nmap -sP 172.29.244.${X}-${Y}
-		
+
+    # For the following, remove/add `172.29.${subnet}.Z` as needed if your IP range is non-contiguous
+
 		interface="br-mgmt" ; subnet="236" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
-		
+
 		interface="br-vxlan" ; subnet="240" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
-		
+
 		interface="br-storage" ; subnet="244" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
 		```
 1. Manually partition `Block-storage` node's LVM Volume for `cinder`
@@ -120,40 +141,12 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 1. To ensure a easy install, be sure to disable `ufw` or any other firewall like `iptables` on all OpenStack nodes **BEFORE** deploying OSA, as it could cause the install to hang, or fail.
 
 	```
-	ufw disabled
+	ansible target-hosts -m shell -a "ufw disable"
 	```
 
-## Deploy OpenStack using OpenStack Ansible Deployment
+### Deploy OpenStack using OpenStack-Ansible
 
-1. Login to deployment node, and start filling out the configuration file
-
-	```
-	cd /etc/openstack_deploy/
-	cp openstack_user_config.yml.example openstack_user_config.yml
-	vim openstack_user_config.yml
-	```
-
-1. Follow documentation and configuration files for setting up the cloud here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-networking.html>
-
-1. Organize the hosts for OpenStack in the order defined here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-hostlayout.html>
-	1. It is often helpful to diagram out, or use a table to assign roles for each node.
-1. Begin filling out configuration file with `br-mgmt` IPs for each host to be used.  **DO NOT** use the host's physical IP address.
-1. Fill out `openstack_user_config.yml` and `user_variables.yml`
-1. Generate OpenStack Credentials found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-creds.html>
-
-	```
-	cd /opt/openstack-ansible/scripts
-	python pw-token-gen.py --file /etc/openstack_deploy/user_secrets.yml
-	``` 
-1. Configure HAProxy found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-haproxy.html#making-haproxy-highly-available>
-1. Check syntax of configuration files: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-configurationintegrity.html>
-
-	```
-	cd /opt/openstack-ansible/playbooks/
-	
-	openstack-ansible setup-infrastructure.yml --syntax-check
-	```
-1. If SSH on the hosts are configured with a port other than port `22`, this `~/.ssh/config` must be used.  Replace all fields containining `< >` and `<SSH-PORT>` sections
+1. If SSH on the hosts are configured with a port other than port `22`, this `~/.ssh/config` must be used on the deployment host.  Replace all fields containining `< >` and `<SSH-PORT>` sections
 
 	```
 	Host 172.29.236.<IP-RANGE-HERE>?
@@ -163,28 +156,53 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	Host 172.29.236.<INDIVIDUAL-IP-HOST-HERE>
 	        User root
 	        Port <SSH-PORT>
-	
+
 	Host *
 	        User root
 	        Port 22
 	```
 
-1. Run Foundation Playbook: <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-foundation.html#running-the-foundation-playbook>
+1. Login to deployment node, and start filling out the configuration file
 
 	```
-	openstack-ansible setup-hosts.yml
+	cd /etc/openstack_deploy/
+	cp openstack_user_config.yml.example openstack_user_config.yml
+	vim openstack_user_config.yml
 	```
 
-1. **IMPORTANT** If no hardware load balancer is used (as defined here in this documentation), one must run this `playbook` to configure HAProxy on the Infrastructure Hosts
+1. Follow documentation to populate configuration files here: <http://docs.openstack.org/developer/openstack-ansible/newton/install-guide/configure.html>
+1. Begin filling out configuration file with `br-mgmt` IPs for each host to be used.  **DO NOT** use the host's physical IP address.
+1. Fill out `openstack_user_config.yml` and `user_variables.yml`
+1. Generate OpenStack Credentials found here: <http://docs.openstack.org/developer/openstack-ansible/newton/install-guide/configure.html>
 
 	```
-	openstack-ansible haproxy-install.yml
+	cd /opt/openstack-ansible/scripts
+	python pw-token-gen.py --file /etc/openstack_deploy/user_secrets.yml
+	```
+1. Configure HAProxy found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-haproxy.html#making-haproxy-highly-available>
+
+From here, this guide more-or-less follows the [OSA installation docs](http://docs.openstack.org/developer/openstack-ansible/newton/install-guide/installation.html). We probably shoudln't maintain parallel documentation.
+
+1. Check syntax of configuration files: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-configurationintegrity.html>
+
+	```
+	cd /opt/openstack-ansible/playbooks/
+
+	openstack-ansible setup-infrastructure.yml --syntax-check --ask-vault-pass
+	```
+
+1. Hosts file
+
+1. Run Foundation Playbook: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-foundation.html#running-the-foundation-playbook>
+
+	```
+	openstack-ansible setup-hosts.yml --ask-vault-pass
 	```
 
 1. Run infrastructure playbook found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-infrastructure.html#running-the-infrastructure-playbook>
 
 	```
-	openstack-ansible setup-infrastructure.yml
+	openstack-ansible setup-infrastructure.yml --ask-vault-pass
 	```
 
 1. Manually verify that the infrastructure was set up correctly (Mainly a verification of Galera): <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-infrastructure.html#verify-the-database-cluster>
@@ -192,49 +210,50 @@ This repository leverages the OSA host layout exactly, execpt for the following 
 	```
 	ansible galera_container -m shell -a "mysql \
 -h localhost -e 'show status like \"%wsrep_cluster_%\";'"
-	
+
 	OR
-	
+
 	lxc-ls | grep galera
-	
+
 	lxc-attach -n infra1_galera_container-XXXXXXX
-	
+
 	mysql -u root -p
-	
+
 	show status like 'wsrep_cluster%';
-	
+
 	# ^^ That command should display a numeric cluster size equal to the amount of infra-nodes used.
 	```
 
-1. **DO NOT** proceed to this step if the `galera` cluster size is not equal to the amount of infra-nodes used, as it could cause deployment issues.  Be sure to resolve the playbooks above before proceeding to the next step.
+1. Do not proceed if the `galera` cluster size is not equal to the amount of infra-nodes used, as it could cause deployment issues.  Be sure to resolve before proceeding to the next step.
 1. Run the `playbook` to setup OpenStack found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-openstack.html#running-the-openstack-playbook>
 
 	```
-	openstack-ansible setup-openstack.yml
+	openstack-ansible setup-openstack.yml --ask-vault-pass
 	```
 
 ## What now?
 Now that you have a running cloud, other things need to be set up in order to use OpenStack.
 
-For steps on how to do this, see information in this [document.](docs/What-do-I-do-now.md)
+For steps on how to do this, see information in this [post-deployment](docs/post-deployment.md).
 
-## Post-deploy things to do
+## Troubleshooting Tips
+### Dynamic Groups
+OSA uses dynamically created groups of hosts and containers for targeting.
+To see a list of groups, run the following from the deployment host:
+```
+source /opt/ansible-runtime/bin/activate
+/opt/openstack-ansible/scripts/inventory-manage.py -G
+```
 
-1. Secure services with SSL: <http://docs.openstack.org/developer/openstack-ansible/install-guide/configure-sslcertificates.html>
- 
-## Resources
+### Viewing Logs
+#### Viewing Ansible run logs
+Check `/openstack/log/ansible-logging` on the deployment host. :)
 
-* <http://docs.openstack.org/developer/openstack-ansible/install-guide/overview-workflow.html>
-* <http://docs.openstack.org/developer/openstack-ansible/liberty/index.html>
-* <https://github.com/openstack/openstack-ansible>
-* <https://cunninghamshane.com/openstack-in-containers-install-and-upgrade/>
+#### Viewing logs from services provisioned by OSA
+`lxc-attach` to the rsyslog container on your logging server, and look in /var/log/log-storage. Everything that logs to rsyslog, including most of the services that OSA sets up, will end up here.
 
-## Deploying OpenStack Liberty
 
-* Overview: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-osa.html>
-* Host layout: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-hostlayout.html>
-
-## LXC Container commands
+### LXC Container commands
 
 <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-lxc.html>
 
@@ -271,6 +290,11 @@ Stop a container:
 ```
 # lxc-stop --name container_name
 ```
+
+## Deploying OpenStack Liberty -- everything below should be either worked into above sections or deprecated
+
+* Overview: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-osa.html>
+* Host layout: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-hostlayout.html>
 
 ## Hosts
 
@@ -369,11 +393,11 @@ br-vlan | Unnumbered | eth{secondary} | Yes
 ### Physical Interfaces Files
 
 * /etc/network/interfaces
-	
+
 	```
 	auto lo
 	iface lo inet loopback
-		
+
 	source /etc/network/interfaces.d/*
 	```
 
@@ -413,7 +437,7 @@ br-vlan | Unnumbered | eth{secondary} | Yes
 	iface eth{primary}.102 inet manual
 	  vlan-raw-device eth{secondary}
 	```
-	
+
 * /etc/network/interfaces.d/device-bridges
 
 	```
@@ -428,7 +452,7 @@ br-vlan | Unnumbered | eth{secondary} | Yes
 		address 192.168.100.10
 		netmask 255.255.255.0
 		dns-nameservers 8.8.8.8
-	
+
 	# OpenStack Networking VXLAN (tunnel/overlay) bridge
 	auto br-vxlan
 	iface br-vxlan inet static
@@ -439,7 +463,7 @@ br-vlan | Unnumbered | eth{secondary} | Yes
 		bridge_ports eth{primary}.102
 		address 192.168.95.10
 		netmask 255.255.255.0
-	
+
 	# OpenStack Networking VLAN bridge
 	auto br-vlan
 		iface br-vlan inet manual
@@ -448,7 +472,7 @@ br-vlan | Unnumbered | eth{secondary} | Yes
 		bridge_fd 0
 		# Bridge port references untagged interface
 		bridge_ports eth{secondary}
-	
+
 	# Storage bridge (optional)
 	auto br-storage
 	iface br-storage inet static
@@ -474,33 +498,33 @@ infra_control_plane_host | eth{primary} | 10.1.1.10 | N/A
  | br-vlan | Unnumbered | eth{secondary}
  | eth{secondary} | Unnumbered | N/A
  | infra1_container | 192.168.100.10 | br-mgmt
- 
+
 ## Configure Targets
 
 1. Install package dependencies
 	1. In this repo, use `configure_targets.yml` playbook
-		
+
 		```
 		ansible-playbook configure_targets.yml -e "SSH_PUBLIC_KEY='ssh-rsa AAAA...'"
 		```
-		
+
 1. Set up NTP
 
 ## Set up Deployment Host
 
 1. Find the latest stable TAG: <https://github.com/openstack/openstack-ansible/releases> and verify that the selected tag corresponds with the version of OS one wishes to deploy.  One may see something similar to this: `meta:series: liberty` in the release notes.
 1. Clone repo on deploy host (This can be done via Ansible, or on one of the "Infrastructure Control Plane Host")
-	
+
 	```
 	git clone -b 12.0.9 https://github.com/openstack/openstack-ansible.git /opt/openstack-ansible
 	```
-	
+
 1. Run bootstrap
 
 	```
 	cd /opt/openstack-ansible
 	scripts/bootstrap-ansible.sh
-	```	
+	```
 
 ## Prepare Target Hosts
 
@@ -512,21 +536,21 @@ Re-run Ansible Playbook to include changes for block-storage node
 	cd ansible
 	ansible-playbook playbooks/host_credentials.yml
 	```
-	
+
 1. Configure Bare-Metal host networking for OSA setup (VLAN tagged interfaces and LinuxBridges).  At this point, you MUST modify the `hosts` file AND `group_vars/all` variables under `TARGET_HOST_NETWORKING`, `TARGET_HOSTS` and `CINDER_PHYSICAL_VOLUME` sections.
 
 	```
 	ansible-playbook playbooks/configure_networking.yml
 	```
-	
+
 1. Run Playbook to set up an Ubuntu `apt-mirror` using a completely separate host (could use a target-host, but it is not recommended)
 
 	```
 	ansible-playbook playbooks/apt-mirror.yml --skip-tags "update"
-	
+
 	Manually execute the command below on apt-mirror host, since it could take a very long time (upwards of 4 hours)
-	
-	su - apt-mirror -c apt-mirror	
+
+	su - apt-mirror -c apt-mirror
 	```
 
 1. Prepare hosts for OSA Deployment.  This Playbook configures the Deployment host AND OSA Target-hosts.  (Ensure that `hosts` and `group_vars/all` are filled out and accurate)
@@ -534,7 +558,7 @@ Re-run Ansible Playbook to include changes for block-storage node
 	```
 	ansible-playbook playbooks/configure_targets.yml
 	```
-	
+
 1. Manually copy and enable configuration file for OSA
 
 	```

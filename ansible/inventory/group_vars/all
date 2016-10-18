@@ -19,6 +19,7 @@ TARGET_HOST_NETWORKING:
     gateway: 10.1.1.1
     netmask: 255.255.255.0
     network: 10.1.1.0
+    # Separate DNS servers with spaces
     dns_servers: 8.8.8.8
     dns_search: domain.com
     container_vlan_id: 101
@@ -32,19 +33,19 @@ TARGET_HOST_NETWORKING:
     netmask: 255.255.252.0
 
 TARGET_HOSTS:
-  infra_controle_plane_host1:
+  infra_control_plane_host1:
     ip: 10.1.1.10
     device1: eth{primary}
     device2: eth{secondary}
-  infra_controle_plane_host2:
+  infra_control_plane_host2:
     ip: 10.1.1.11
     device1: eth{primary}
     device2: eth{secondary}
-  infra_controle_plane_host3:
+  infra_control_plane_host3:
     ip: 10.1.1.12
     device1: eth{primary}
     device2: eth{secondary}
-  infra_controle_plane_host4:
+  infra_control_plane_host4:
     ip: 10.1.1.13
     device1: eth{primary}
     device2: eth{secondary}
@@ -68,6 +69,6 @@ PARTITIONING:
   - "/sbin/parted /dev/sdb -s set 1 lvm on"
   - "/sbin/parted /dev/sdb -s p"
 
-OSA_VERSION: 12.0.10
+OSA_VERSION: stable/newton
 
 MIRROR_HOSTS: mirror.domain.com

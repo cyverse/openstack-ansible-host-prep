@@ -47,6 +47,11 @@
   tags:
     - update
 
+- name: cron file to update mirror every day
+  copy:
+    src: apt-mirror
+    dest: /etc/cron.d/apt-mirror
+
 - name: configure web endpoint for mirror
   file: src={{ item.src }} dest={{ item.dest }} state=link
   with_items: '{{ MIRROR.repo_path }}'
@@ -71,7 +76,22 @@
     - mirror
     - apache2
 
-- name: template source.list to all client nodes
+- name: allow port 80 through firewall
+  ufw:
+    rule: allow
+    port: 80
+    proto: tcp
+  tags: firewall
+
+- name: Set MIRROR_HOSTS IP address if MIRROR_HOSTS is not defined
+  set_fact:
+    MIRROR_HOSTS: "{{ ansible_default_ipv4.address }}"
+  when:
+    MIRROR_HOSTS is not defined
+  tags:
+    - vars
+
+- name: template sources.list to all client nodes
   template: src=sources.list.j2 dest={{ MIRROR.client_path }} backup=yes
   # with_first_found:
   #   - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.sources.list.j2"
