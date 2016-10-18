@@ -181,7 +181,7 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 	```
 1. Configure HAProxy found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-haproxy.html#making-haproxy-highly-available>
 
-From here, this guide more-or-less follows the [OSA installation docs](http://docs.openstack.org/developer/openstack-ansible/newton/install-guide/installation.html). We probably shoudln't maintain parallel documentation.
+  From here, this guide more-or-less follows the [OSA installation docs](http://docs.openstack.org/developer/openstack-ansible/newton/install-guide/installation.html). We probably shoudln't maintain parallel documentation.
 
 1. Check syntax of configuration files: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-configurationintegrity.html>
 
