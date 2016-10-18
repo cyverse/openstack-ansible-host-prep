@@ -47,15 +47,15 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 ### Prepare for OpenStack Deploy
 
 1. Get Ansible on your deployment host
-```
-$ sudo su
-$ apt-get install software-properties-common
-$ apt-add-repository ppa:ansible/ansible
-$ apt-get update
-$ apt-get install ansible
-```
+  ```
+  $ sudo su
+  $ apt-get install software-properties-common
+  $ apt-add-repository ppa:ansible/ansible
+  $ apt-get update
+  $ apt-get install ansible
+  ```
 
-Ensure that you can SSH to all of the target hosts using SSH key authentication, and that you have accepted their host keys into your known_hosts file. In other words, generate an SSH keypair on your deployment host, copy it to each of the target hosts' authorized_keys files, and test passwordless SSH connection from the deployment host to each target hosts.
+  Ensure that you can SSH to all of the target hosts using SSH key authentication, and that you have accepted their host keys into your known_hosts file. In other words, generate an SSH keypair on your deployment host, copy it to each of the target hosts' authorized_keys files, and test passwordless SSH connection from the deployment host to each target hosts.
 
 1. Clone this repo to your deployment host, and populate the Ansible inventory file (`ansible/hosts`) with the actual hostnames and IP addresses of your target hosts. If you want to use a separate inventory file that is stored elsewhere, change line `17` of the `ansible/ansible.cfg` file to point to that host file, e.g.:
 
@@ -65,7 +65,7 @@ Ensure that you can SSH to all of the target hosts using SSH key authentication,
 
 1. Prepare host networking by determining interfaces and IP addresses, and populating the `ansible/inventory/group_vars/all` with IPs and other variables. If you are storing your hosts file somewhere else, consider moving the group_vars folder, storing it alongside your hosts file.
 
-You can use the following commands to retrieve the network interfaces and IP addresses of your target hosts, for reference:
+  You can use the following commands to retrieve the network interfaces and IP addresses of your target hosts, for reference:
 
 	```
 	ansible target-hosts -m shell -a "ip addr show" > all-interfaces.txt
