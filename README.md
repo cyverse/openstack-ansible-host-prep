@@ -234,7 +234,7 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 ## What now?
 Now that you have a running cloud, other things need to be set up in order to use OpenStack.
 
-For steps on how to do this, see information in this [post-deployment](docs/post-deployment.md).
+For steps on how to do this, see [post-deployment](docs/post-deployment.md).
 
 ## Troubleshooting Tips
 ### Dynamic Groups
