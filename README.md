@@ -5,7 +5,7 @@ The [OpenStack-Ansible](http://docs.openstack.org/developer/openstack-ansible/) 
 This is confirmed working for OpenStack Newton on Ubuntu 16.04. Your mileage may vary if you try deploying other versions/distros.
 
 ## Issues/todo/questions
-- APT mirror role deploys a broken sources.list to the target hosts running Ubuntu 16.04. Either fix APT mirror role or rip it out as it's not strictly needed.
+- APT mirror role is broken for Ubuntu 16.04 but not needed at all (just makes the deployment faster). Either fix APT mirror role or rip it out as it's not strictly needed.
 - Why do we "copy master's private key to all hosts" in the host-credentials role? This seems to violate the security guideline of not spreading SSH private keys to other hosts.
 - We should not disable host key checking. learn host keys from MAAS
 - Perhaps automate the process of manually connecting to each host, accepting the initial host key (checking against host key from MAAS installation), and copying deployer's public key to /root/.ssh/authorized_keys
