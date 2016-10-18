@@ -1,49 +1,60 @@
-# What do I do now?
+# Post-Deployment Steps
+Now that you have a (hopefully) functional OpenStack Cloud, you need to do a couple of things to get your cloud fully operational and usable for applications like Atmosphere.
 
-Now that you have a fully functional OpenStack Cloud, you need to do a couple of things to get your cloud fully operational and usable for applications like Atmosphere.
+## Back up your database
+In the event that all of your galera containers are shut down at the same time, the galera cluster will break and you may need to restore from a backup. Take an initial dump of your database in case this happens. From inside a galera container:
+`mysqldump --opt --events --all-databases > openstack.sql`, and store it in a safe place.
 
-## Ensure Infrastructure Requirements
+## Infrastructure Requirements
 
-### Cisco Switch/Router Requirements
+### IGMP snooping querier
+If using Cisco gear with this deployment setup, you must configure an IGMP snooping querier on the same subnet as the tunneling subnet and VLAN.
 
-**IMPORTANT** If one is using Cisco gear with this deployment setup, it is an absolute requirement to have a IGMP Snooping Querier on the **SAME** subnet as the tunneling VLAN network.  For example, if using the default range of IP addresses defined in the OpenStack Ansible deployment, i.e. `tunnel: 172.29.240.0/22`, one **MUST** have an `IGMP Snooping Querier` within that range, or `Multicast` traffic for `HA L3 Neutron agents` will **NOT** work!
+For example, if using the default range of IP addresses defined in the OpenStack Ansible deployment, i.e. `tunnel: 172.29.240.0/22`, configure an IGMP snooping querier within that range on the VLAN used for the tunnelling network, or `Multicast` traffic for `HA L3 Neutron agents` will not work. It is suggested to set your `IGMP Snooping Querier` IP to `172.29.243.254` (if using the above tunnel block of IP addresses).
 
-To prevent this, it is suggested that one set their `IGMP Snooping Querier` IP to `172.29.243.254`.  Just note that this address only applies if using the above tunnel block of IP addresses.
+### Example Dell (Force10) switch configuration
+```
+interface Vlan 102
+ name tunnel
+ ip address 172.29.243.254/22
+ ip igmp snooping querier
+ no shutdown
+!
+ip igmp snooping enable
+```
 
-## Setting up your cloud for general use
+This snippet does not cover adding tagged/untagged trunk ports to the VLAN interface, which you must do specific to your deployment.
+
+## Setting up OpenStack for general use
+
+### Interacting with OpenStack CLI
+
+SSH to any of the infrastructure hosts. Then, attach one of the utility containers and source the openrc file:
+
+```
+lxc-attach -n name-of-your-utility-container
+source /root/openrc
+```
+
+Then, you can use the OpenStack command-line interface -- here's a [cheat cheet](http://docs.openstack.org/user-guide/cli-cheat-sheet.html).
 
 ### Creating OpenStack Glance Images
 
-Follow instructions below from the source here: <http://docs.openstack.org/liberty/install-guide-ubuntu/glance-verify.html>
+See [Verify operation of Glance](http://docs.openstack.org/newton/install-guide-ubuntu/glance-verify.html).
 
-1. SSH into the any of the `Infrastructure Control Plane Hosts` or `ICPH`, attach to the `utility` container, and run the following commands to create images:
+For the lazy, here are commands to set up Ubuntu 16.04 and CentOS 7 images:
 
-	```
-	lxc-attach -n infra<ICPH-#><LITERAL-TAB>util<LITERAL-TAB>
+```
+wget https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img
+openstack image create "ubuntu-16.04" --file xenial-server-cloudimg-amd64-disk1.img --disk-format qcow2 --container-format bare --public
+wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1608.qcow2
+openstack image create "centos-7" --file CentOS-7-x86_64-GenericCloud-1608.qcow2 --disk-format qcow2 --container-format bare --public
+```
 
-	source openrc
+OpenStack should now report all of the images you just created:
 
-	wget http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
-
-	glance image-create --name "cirros" --file cirros-0.3.4-x86_64-disk.img --disk-format qcow2 --container-format bare --visibility public --progress
-
-	glance image-list
-	
-	# above command should display an image called "cirros"
-	
-	wget https://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img
-	
-	glance image-create --name "ubuntu-14.04" --file trusty-server-cloudimg-amd64-disk1.img --disk-format qcow2 --container-format bare --visibility public --progress
-	
-	wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1503.qcow2
-	
-	glance image-create --name "centos-7" --file CentOS-7-x86_64-GenericCloud-1503.qcow2 --disk-format qcow2 --container-format bare --visibility public --progress
-	```
-
-1. Glance should now report at least one of the images downloaded above
-
-	```
-	root@infra1_utility_container-<ID>:~# glance image-list
+```
+root@infra1_utility_container-<ID>:~# openstack image list
 +--------------------------------------+--------------+
 | ID                                   | Name         |
 +--------------------------------------+--------------+
@@ -51,7 +62,7 @@ Follow instructions below from the source here: <http://docs.openstack.org/liber
 | random-id-2-ahgh8caetha9sahc9bu5OJ6g | cirros       |
 | random-id-3-ahgh8caetha9sahc9bu5OJ6g | ubuntu-14.04 |
 +--------------------------------------+--------------+
-	```
+```
 
 ### Create OpenStack Neutron Networks
 
@@ -67,6 +78,7 @@ Below are steps to create networks as described above:
 ```
 neutron net-create --provider:physical_network=flat --provider:network_type=flat --router:external=true --shared ext-net
 
+# Fill in these with your external (public) IP space
 LOW="3";HIGH="254";ROUTER="1";NETWORK="192.168.1";CIDR=".0/24";DNS="8.8.8.8"
 
 neutron subnet-create --name ext-net --allocation-pool start=${NETWORK}.${LOW},end=${NETWORK}.${HIGH}  --dns-nameserver ${DNS} --gateway ${NETWORK}.${ROUTER} ext-net ${NETWORK}${CIDR} --enable_dhcp=False
@@ -88,7 +100,7 @@ nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
 
 For more information on how VRRP works, see these documents:
 
-* <http://docs.openstack.org/liberty/networking-guide/scenario-l3ha-lb.html>
+* <http://docs.openstack.org/newton/networking-guide/scenario-l3ha-lb.html>
 * <https://wiki.openstack.org/wiki/Neutron/L3_High_Availability_VRRP>
 
 For steps on how to troubleshoot OpenStack Neutron Networking, see these pages:
@@ -101,6 +113,7 @@ For steps on how to troubleshoot OpenStack Neutron Networking, see these pages:
 
 1. Login to OpenStack `Horizon` Web-interface defined in the variable `external_lb_vip_address` in the `openstack_user_config.yml` file under the section called `global_overrides`
 1. Grab the login password from the `user_secrets.yml` file listed under `keystone_auth_admin_password`.  Login using `admin` and the `keystone_auth_admin_password `.
+1. Create a flavor, System -> Flavors
 1. Select `Project`, `Compute/Instances`
 1. Select `Launch Instance`
 1. Fill out the following settings:
@@ -109,34 +122,33 @@ For steps on how to troubleshoot OpenStack Neutron Networking, see these pages:
 	# Details
 	Availability Zone: nova
 	Instance Name: <your-instance-name-here>
-	Flavor: <m1.medium for non-cirros images, m1.small for cirros>
+	Flavor: <use the flavor you created, m1.medium for non-cirros images, m1.small for cirros>
 	Instance Count: 1
 	Instance Boot Source: Boot from image
 	Image Name: <glance image to boot>
-	
+
 	# Access & Security
 	Click + to add your id_rsa.pub key
 	Security Groups: Select default
-	
+
 	# Networking
 	Drag "selfservice" network into "Selected networks"
-	
+
 	Launch
-	
+
 	# Add Floating IP address
 	Click down-arrow under "Actions" for that launched instance, and select "Associate Floating IP"
 	Click "+" to create a Floating IP allocation
 	Pool: ext-net
 
 	Allocate IP
-	
+
 	Associate
 	```
 
 #### From OpenStack CLI
 
-1. <http://docs.openstack.org/liberty/install-guide-ubuntu/launch-instance.html>
-1. <http://docs.openstack.org/liberty/install-guide-ubuntu/launch-instance-private.html>
+1. <http://docs.openstack.org/newton/install-guide-ubuntu/launch-instance.html>
 
 ### Verify Operabilty
 
@@ -161,39 +173,45 @@ Then run:
 openstack-ansible setup-everything.yml --limit "<compute2>,<compute3>,<compute4>"
 ```
 
-For more information, see how to do this here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/ops-addcomputehost.html>
+For more information, see how to do this here: <http://docs.openstack.org/developer/openstack-ansible/newton/developer-docs/ops-add-computehost.html>
 
-## Quick Troubleshooting Tips
+## Troubleshooting
 
-1. If `Horizon` reports a failure on instance launch because it cannot select a Hypervisor (or says there is not available), check the logs on the for the following message: 
+### Troubleshooting Instance Launching
+
+1. If `Horizon` reports a failure on instance launch because it cannot select a Hypervisor (or says there is not available), check the logs on the for the following message:
 
 	```
 	Image <glance-image-id> could not be found.
 	```
-	
-	This means that HAProxy sent a request to a `Glance` container which did not have the image requested.  Until something like `glance-irods` is installed and configured, one might want to disable HAProxy for `Glance` to only select the node that has all of the images.
+
+	This means that HAProxy sent a request to a `Glance` container which did not have the image requested.
+
+
+
+  Until something like `glance-irods` is installed and configured, one might want to disable HAProxy for `Glance` to only select the node that has all of the images.
 
 	To fix, this do the following:
-	
+
 	Login to all `Infrastructure Control Plane Hosts` at once using broadcast input with your favorite terminal, or `tmux` with `setw syncronize-panes on` modify the HAProxy configuration.
-	
+
 	```
 	cd /etc/haproxy/conf.d/
-	
+
 	lxc-attach -n infra<LITERAL-TAB>_glance_container-<LITERAL-TAB>
-	
+
 	cd /var/lib/glance/images/
-	
+
 	ls -la
-	
+
 	# Identify the container that contains all the Glance images in it, and take note of this container
-	
+
 	exit
-	
+
 	vim glance_registry
-	
+
 	# Modify the section labeled: "backend glance_registry-back" and comment out the two containers that DO NOT have the correct Glance images on them.
-	
+
 	# E.g. Where Glance "infra3" contained all Glance images
 	backend glance_registry-back
 	    mode http
@@ -201,11 +219,11 @@ For more information, see how to do this here: <http://docs.openstack.org/develo
 	    #server infra1_glance_container-<id> 172.29.239.<ip1>:9191 check port 9191 inter 12000 rise 3 fall 3
 	    #server infra2_glance_container-<id> 172.29.238.<ip2>:9191 check port 9191 inter 12000 rise 3 fall 3
 	    server infra3_glance_container-<id> 172.29.239.<ip3>:9191 check port 9191 inter 12000 rise 3 fall 3
-	
+
 	```
 
-1. If all of the `Infrastructure Control Plane Hosts` go down or reboot at once, this will have disasterous affect on Galera MySQL Cluster, as it will likely not recover, and have split-brain issues.  To fix this, follow the steps listed here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/ops-galera-recoverysingle.html>
-
+### Galera cluster loses quorum
+If all of the `Infrastructure Control Plane Hosts` go down or reboot at once, this will have disastrous affect on Galera MySQL Cluster, as it will likely not recover, and have split-brain issues. See [Galera cluster recovery](http://docs.openstack.org/developer/openstack-ansible/newton/developer-docs/ops-galera-recovery.html) for more information.
 
 ## Hardening your cloud
 
@@ -226,7 +244,7 @@ At this point, all firewalls will be down, so one will need to be sure to config
 <https://wiki.openstack.org/wiki/IRC>
 
 1. To get help, go here: <http://webchat.freenode.net/?channels=openstack-ansible>
-1. Pick a username and chat! 
+1. Pick a username and chat!
 
 ### RabbitMQ Management Console
 
