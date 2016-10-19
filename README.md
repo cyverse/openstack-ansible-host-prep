@@ -255,41 +255,7 @@ Check `/openstack/log/ansible-logging` on the deployment host. :)
 
 ### LXC Container commands
 
-<http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-lxc.html>
-
-List containers and summary information such as operational state and network configuration:
-
-```
-# lxc-ls --fancy
-
-OR
-
-# lxc-ls -f
-```
-
-Show container details including operational state, resource utilization, and veth pairs:
-
-```
-# lxc-info --name container_name
-```
-
-Start a container:
-
-```
-# lxc-start --name container_name
-```
-
-Attach to a container:
-
-```
-# lxc-attach --name container_name
-```
-
-Stop a container:
-
-```
-# lxc-stop --name container_name
-```
+<http://docs.openstack.org/developer/openstack-ansible/newton/developer-docs/ops-lxc-commands.html>
 
 ## Deploying OpenStack Liberty -- everything below should be either worked into above sections or deprecated
 
