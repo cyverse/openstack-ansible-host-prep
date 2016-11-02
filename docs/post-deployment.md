@@ -3,7 +3,7 @@ Now that you have a (hopefully) functional OpenStack Cloud, you need to do a cou
 
 ## Back up your database
 In the event that all of your galera containers are shut down at the same time, the galera cluster will break and you may need to restore from a backup. Take an initial dump of your database in case this happens. From inside a galera container:
-`mysqldump --opt --events --all-databases > openstack.sql`, and store it in a safe place.
+`mysqldump --opt --events --all-databases > openstack-YYYYMMDD.sql`, and store it in a safe place.
 
 ## Infrastructure Requirements
 
@@ -242,9 +242,6 @@ At this point, all firewalls will be down, so one will need to be sure to config
 ### IRC Help Forums
 
 <https://wiki.openstack.org/wiki/IRC>
-
-1. To get help, go here: <http://webchat.freenode.net/?channels=openstack-ansible>
-1. Pick a username and chat!
 
 ### RabbitMQ Management Console
 
