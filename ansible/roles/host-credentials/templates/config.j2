@@ -4,7 +4,5 @@ Host {{ k }}
     User root
     Port {{ SSH.PORT }}
     Hostname {{ v.ip }}
-    StrictHostKeyChecking no
-    UserKnownHostsFile=/dev/null
 {%   endif %}
 {% endfor %}
