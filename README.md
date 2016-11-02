@@ -6,6 +6,7 @@ This is confirmed working for OpenStack Newton on Ubuntu 16.04. Your mileage may
 
 ## Issues/todo/questions
 - APT mirror role is broken for Ubuntu 16.04 but not needed at all (just makes the deployment faster). Either fix APT mirror role or rip it out as it's not strictly needed.
+- Make cinder LVM/iSCSI stuff explicitly optional if another storage back-end (e.g. Ceph) will be used
 - Why do we "copy master's private key to all hosts" in the host-credentials role? This seems to violate the security guideline of not spreading SSH private keys to other hosts.
 - We should not disable host key checking. learn host keys from MAAS
 - Perhaps automate the process of manually connecting to each host, accepting the initial host key (checking against host key from MAAS installation), and copying deployer's public key to /root/.ssh/authorized_keys
@@ -48,14 +49,15 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 
 1. Get Ansible on your deployment host
   ```
-  $ sudo su
-  $ apt-get install software-properties-common
-  $ apt-add-repository ppa:ansible/ansible
-  $ apt-get update
-  $ apt-get install ansible
+  sudo su
+  apt-get install software-properties-common
+  apt-add-repository ppa:ansible/ansible
+  apt-get update
+  # Passlib is also required to set root passwords
+  apt-get install ansible python-passlib
   ```
 
-  Ensure that you can SSH to all of the target hosts using SSH key authentication, and that you have accepted their host keys into your known_hosts file. In other words, generate an SSH keypair on your deployment host, copy it to each of the target hosts' authorized_keys files, and test passwordless SSH connection from the deployment host to each target hosts.
+  Ensure that you can SSH to all of the target hosts using SSH key authentication, and that you have accepted their host keys into your known_hosts file. In other words, if you haven't done so already, generate an SSH keypair on your deployment host, copy it to each of the target hosts' authorized_keys files, and test passwordless SSH connection from the deployment host to each target hosts.
 
 1. Clone this repo to your deployment host, and populate the Ansible inventory file (`ansible/hosts`) with the actual hostnames and IP addresses of your target hosts. If you want to use a separate inventory file that is stored elsewhere, change line `17` of the `ansible/ansible.cfg` file to point to that host file, e.g.:
 
@@ -162,7 +164,7 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 	        Port 22
 	```
 
-1. Login to deployment node, and start filling out the configuration file
+1. Login to deployment node, and start filling out the configuration files (or symlink to files stored somewhere else if you already have them)
 
 	```
 	cd /etc/openstack_deploy/
@@ -180,6 +182,7 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 	python pw-token-gen.py --file /etc/openstack_deploy/user_secrets.yml
 	```
 1. Configure HAProxy found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-haproxy.html#making-haproxy-highly-available>
+(update this for Newton!)
 
   From here, this guide more-or-less follows the [OSA installation docs](http://docs.openstack.org/developer/openstack-ansible/newton/install-guide/installation.html). We probably shoudln't maintain parallel documentation.
 
@@ -208,8 +211,8 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 1. Manually verify that the infrastructure was set up correctly (Mainly a verification of Galera): <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-infrastructure.html#verify-the-database-cluster>
 
 	```
-	ansible galera_container -m shell -a "mysql \
--h localhost -e 'show status like \"%wsrep_cluster_%\";'"
+  . /usr/local/bin/openstack-ansible.rc
+	ansible galera_container -m shell -a "mysql -h localhost -e 'show status like \"%wsrep_cluster_%\";'"
 
 	OR
 
@@ -259,12 +262,9 @@ Check `/openstack/log/ansible-logging` on the deployment host. :)
 
 ## Deploying OpenStack Liberty -- everything below should be either worked into above sections or deprecated
 
-* Overview: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-osa.html>
-* Host layout: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-hostlayout.html>
-
 ## Hosts
 
-5 minimum required nodes + 1 node for cinder
+5 minimum required nodes, 1 optional node for cinder LVM (if not using Ceph)
 
 ```
 3 - Control Plane
@@ -273,9 +273,7 @@ Check `/openstack/log/ansible-logging` on the deployment host. :)
 1 - Cinder
 ```
 
-**Requires a deployment host (can be the primary "Infrastructure Control Plane Host", or other host with access to all VLAN interfaces)**
-
-**Requires an HAProxy container on all Control Plane Hosts**
+You must run OSA from a deployment host which has access to all subnets and VLANs in your deployment. This can be one of the primary infrastructure / control plan hosts.
 
 ## Networking
 Networking diagram and description found here: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-hostnetworking.html>
@@ -339,8 +337,8 @@ DHCP agent + L3 Agent and Linux Bridge
 
 * Overview: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/overview-security.html>
 * AppArmor Ansible role: <https://github.com/openstack/openstack-ansible/blob/liberty/playbooks/roles/lxc_hosts/templates/lxc-openstack.apparmor.j2>
-* SSL (Using our certs): <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-sslcertificates.html>
-* Hardening: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/configure-initial.html#security-hardening>
+* SSL (Using our certs): <http://docs.openstack.org/developer/openstack-ansible/install-guide/app-advanced-config-sslcertificates.html>
+* Hardening: <http://docs.openstack.org/developer/openstack-ansible/newton/install-guide/app-security.html>
 
 ## Networking Reference Architecture
 
