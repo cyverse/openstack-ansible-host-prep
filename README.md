@@ -5,6 +5,7 @@ The [OpenStack-Ansible](http://docs.openstack.org/developer/openstack-ansible/) 
 This is confirmed working for OpenStack Newton on Ubuntu 16.04. Your mileage may vary if you try deploying other versions/distros.
 
 ## Issues/todo/questions
+- host-credentials.yml is broken in Ansible 2.2 ([bug submitted to Ansible](https://github.com/ansible/ansible-modules-core/issues/5479)). Workaround is to install Ansible 2.1
 - APT mirror role is broken for Ubuntu 16.04 but not needed at all (just makes the deployment faster). Either fix APT mirror role or rip it out as it's not strictly needed.
 - Make cinder LVM/iSCSI stuff explicitly optional if another storage back-end (e.g. Ceph) will be used
 - Why do we "copy master's private key to all hosts" in the host-credentials role? This seems to violate the security guideline of not spreading SSH private keys to other hosts.
@@ -47,7 +48,8 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 
 ### Prepare for OpenStack Deploy
 
-1. Get Ansible on your deployment host
+1. Get Ansible on your deployment host. [This bug](https://github.com/ansible/ansible-modules-core/issues/5479) requires us to use Ansible 2.1 for the moment.
+  So, don't do this for the moment:
   ```
   sudo su
   apt-get install software-properties-common
@@ -56,16 +58,23 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
   # Passlib is also required to set root passwords
   apt-get install ansible python-passlib
   ```
+  Instead, do this:
+  ```
+  wget https://launchpad.net/~ansible/+archive/ubuntu/ansible/+build/10969193/+files/ansible_2.1.2.0-1ppa~xenial_all.deb
+  dpkg -i ansible_2.1.2.0-1ppa~xenial_all.deb
+  # Passlib is also required to set root passwords
+  apt-get install python-passlib
+  ```
 
   Ensure that you can SSH to all of the target hosts using SSH key authentication, and that you have accepted their host keys into your known_hosts file. In other words, if you haven't done so already, generate an SSH keypair on your deployment host, copy it to each of the target hosts' authorized_keys files, and test passwordless SSH connection from the deployment host to each target hosts.
 
-1. Clone this repo to your deployment host, and populate the Ansible inventory file (`ansible/hosts`) with the actual hostnames and IP addresses of your target hosts. If you want to use a separate inventory file that is stored elsewhere, change line `17` of the `ansible/ansible.cfg` file to point to that host file, e.g.:
+1. Clone this repo to your deployment host, and populate the Ansible inventory file (`ansible/inventory/hosts`) with the actual hostnames and IP addresses of your target hosts. If you want to use a separate inventory file that is stored elsewhere, change line `17` of the `ansible/ansible.cfg` file to point to that host file, e.g.:
 
 	```
 	hostfile       = <your-private-repo-here>/ansible/inventory/hosts
 	```
 
-1. Prepare host networking by determining interfaces and IP addresses, and populating the `ansible/inventory/group_vars/all` with IPs and other variables. If you are storing your hosts file somewhere else, consider moving the group_vars folder, storing it alongside your hosts file.
+1. Prepare host networking by determining interfaces and IP addresses, and populating the `ansible/inventory/group_vars/all` with IPs and other variables. If you are storing your hosts file somewhere else, consider storing the group_vars folder alongside it.
 
   You can use the following commands to retrieve the network interfaces and IP addresses of your target hosts, for reference:
 
@@ -124,7 +133,7 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 
 		interface="br-storage" ; subnet="244" ; for i in 172.29.${subnet}.{X..Y} 172.29.${subnet}.Z;do echo "Pinging host on ${interface}: $i"; ping -c 3 -I $interface $i;done
 		```
-1. Manually partition `Block-storage` node's LVM Volume for `cinder`
+1. If using LVM backing for Cinder, manually partition `Block-storage` node's LVM Volume:
 
 	```
 	/sbin/parted /dev/sd<device> -s mklabel gpt
@@ -199,13 +208,13 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 1. Run Foundation Playbook: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-foundation.html#running-the-foundation-playbook>
 
 	```
-	openstack-ansible setup-hosts.yml --ask-vault-pass
+	time openstack-ansible setup-hosts.yml --ask-vault-pass
 	```
 
 1. Run infrastructure playbook found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-infrastructure.html#running-the-infrastructure-playbook>
 
 	```
-	openstack-ansible setup-infrastructure.yml --ask-vault-pass
+	time openstack-ansible setup-infrastructure.yml --ask-vault-pass
 	```
 
 1. Manually verify that the infrastructure was set up correctly (Mainly a verification of Galera): <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-infrastructure.html#verify-the-database-cluster>
@@ -231,7 +240,7 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 1. Run the `playbook` to setup OpenStack found here: <http://docs.openstack.org/developer/openstack-ansible/install-guide/install-openstack.html#running-the-openstack-playbook>
 
 	```
-	openstack-ansible setup-openstack.yml --ask-vault-pass
+	time openstack-ansible setup-openstack.yml --ask-vault-pass
 	```
 
 ## What now?
