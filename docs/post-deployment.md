@@ -47,8 +47,12 @@ For the lazy, here are commands to set up Ubuntu 16.04 and CentOS 7 images:
 ```
 wget https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img
 openstack image create "ubuntu-16.04" --file xenial-server-cloudimg-amd64-disk1.img --disk-format qcow2 --container-format bare --public
-wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1608.qcow2
-openstack image create "centos-7" --file CentOS-7-x86_64-GenericCloud-1608.qcow2 --disk-format qcow2 --container-format bare --public
+wget http://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img
+openstack image create "ubuntu-14.04" --file trusty-server-cloudimg-amd64-disk1.img --disk-format qcow2 --container-format bare --public
+wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+openstack image create "centos-7" --file CentOS-7-x86_64-GenericCloud.qcow2 --disk-format qcow2 --container-format bare --public
+wget http://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2
+openstack image create "centos-6" --file CentOS-6-x86_64-GenericCloud.qcow2 --disk-format qcow2 --container-format bare --public
 ```
 
 OpenStack should now report all of the images you just created:
@@ -107,13 +111,23 @@ For steps on how to troubleshoot OpenStack Neutron Networking, see these pages:
 
 * <http://docs.openstack.org/ops-guide/ops_network_troubleshooting.html>
 
+### Create some Flavors
+
+```
+openstack flavor create --ram 2048 --disk 8 --vcpus 1 --public tiny
+openstack flavor create --ram 4096 --disk 8 --vcpus 2 --public small
+openstack flavor create --ram 16384 --disk 8 --vcpus 6 --public medium
+openstack flavor create --ram 30720 --disk 8 --vcpus 10 --public large
+openstack flavor create --ram 61440 --disk 8 --vcpus 24 --public xlarge
+openstack flavor create --ram 122880 --disk 8 --vcpus 44 --public xxlarge
+```
+
 ### Launch an instance with Networking
 
 #### From Horizon
 
 1. Login to OpenStack `Horizon` Web-interface defined in the variable `external_lb_vip_address` in the `openstack_user_config.yml` file under the section called `global_overrides`
 1. Grab the login password from the `user_secrets.yml` file listed under `keystone_auth_admin_password`.  Login using `admin` and the `keystone_auth_admin_password `.
-1. Create a flavor, System -> Flavors
 1. Select `Project`, `Compute/Instances`
 1. Select `Launch Instance`
 1. Fill out the following settings:
