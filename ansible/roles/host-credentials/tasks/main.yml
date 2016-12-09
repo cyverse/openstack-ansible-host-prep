@@ -16,7 +16,7 @@
 #########################
 - name: generate root password
   local_action: shell pwgen {{ TARGET_HOST_PASSWORDS.password_length }} 1
-  with_items: groups['target-hosts']
+  with_items: "{{ groups['target-hosts'] }}"
   when: GENERATE_ROOT_PASSWORDS is defined
   run_once: true
   register: root_pass
@@ -33,7 +33,7 @@
 - name: check to see if passwords have already been generated
   local_action: shell grep {{ item | upper }} {{ TARGET_HOST_PASSWORDS.file }}
   register: passwd_file
-  with_items: groups['target-hosts']
+  with_items: "{{ groups['target-hosts'] }}"
   when: GENERATE_ROOT_PASSWORDS is defined
   failed_when: False
   run_once: true
