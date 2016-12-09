@@ -6,7 +6,7 @@ SET_ROOT_PASSWORDS: True
 
 TARGET_HOST_PASSWORDS:
   file: openstack_target_host_root_passwords.txt
-  password_length: 12
+  password_length: 16
 
 # Deploy node SSH public key
 SSH:
