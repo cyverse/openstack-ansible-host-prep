@@ -50,7 +50,7 @@
 
 - name: output password to file
   local_action: 'lineinfile dest="{{ TARGET_HOST_PASSWORDS.file }}" regexp="^{{ item.item | upper }}(.*)" line="{{ item.item | upper }}: {{ item.stdout }}"'
-  with_items: root_pass.results
+  with_items: "{{ root_pass.results }}"
   when: GENERATE_ROOT_PASSWORDS is defined
   tags:
     - password

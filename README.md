@@ -48,8 +48,7 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 
 ### Prepare for OpenStack Deploy
 
-1. Get Ansible on your deployment host. [This bug](https://github.com/ansible/ansible-modules-core/issues/5479) requires us to use Ansible 2.1 for the moment.
-  So, don't do this for the moment:
+1. Get Ansible on your deployment host.
   ```
   sudo su
   apt-get install software-properties-common
@@ -57,13 +56,6 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
   apt-get update
   # Passlib is also required to set root passwords
   apt-get install ansible python-passlib
-  ```
-  Instead, do this:
-  ```
-  wget https://launchpad.net/~ansible/+archive/ubuntu/ansible/+build/10969193/+files/ansible_2.1.2.0-1ppa~xenial_all.deb
-  dpkg -i ansible_2.1.2.0-1ppa~xenial_all.deb
-  # Passlib is also required to set root passwords
-  apt-get install python-passlib
   ```
 
   Ensure that you can SSH to all of the target hosts using SSH key authentication, and that you have accepted their host keys into your known_hosts file. In other words, if you haven't done so already, generate an SSH keypair on your deployment host, copy it to each of the target hosts' authorized_keys files, and test passwordless SSH connection from the deployment host to each target hosts.
