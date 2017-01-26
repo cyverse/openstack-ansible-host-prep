@@ -134,16 +134,29 @@
   template: src=hosts.j2 dest=/etc/hosts
   tags: hosts-file
 
-- name: template .ssh/config file on all openstack nodes
-  template: src=config.j2 dest=/root/.ssh/config backup=yes
-  tags: ssh-config
+- name: system-wide SSH config installed for all targets
+  blockinfile:
+    dest: /etc/ssh/ssh_config
+    block: |
+      {% for k,v in TARGET_HOSTS | dictsort(false, 'value') %}
+      {%   if k != inventory_hostname %}
+      Host {{ k }}
+          User root
+          Port {{ SSH.PORT }}
+          Hostname {{ v.ip }}
+      {%   endif %}
+      {% endfor %}
+    backup: yes
+    tags: ssh-config
 
-- name: template local .ssh/config file
-  local_action: template src=config_local.j2 dest=~/.ssh/config2
-  run_once: true
-  tags: ssh-config
-
-- name: notify about local .ssh/config
-  debug: msg="Be sure to add the contents of ~/.ssh/config2 to your ~/.ssh/config !!"
-  run_once: true
-  tags: ssh-config
+# We may not need this with the task above
+# - name: template local .ssh/config file
+#   local_action: template src=config_local.j2 dest=~/.ssh/config2
+#   run_once: true
+#   tags: ssh-config
+#
+# - name: notify about local .ssh/config
+#   debug: msg="Be sure to add the contents of ~/.ssh/config2 to your ~/.ssh/config !!"
+#   run_once: true
+#   tags: ssh-config
+#
