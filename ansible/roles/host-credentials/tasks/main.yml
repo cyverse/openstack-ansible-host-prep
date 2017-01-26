@@ -147,7 +147,7 @@
       {%   endif %}
       {% endfor %}
     backup: yes
-    tags: ssh-config
+  tags: ssh-config
 
 # We may not need this with the task above
 # - name: template local .ssh/config file
