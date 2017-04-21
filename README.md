@@ -197,7 +197,7 @@ Configuring the switching fabric between hosts is up to you, but is straightforw
 
 1. Hosts file
 
-1. Run Foundation Playbook: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-foundation.html#running-the-foundation-playbook>
+1. Run Foundation Playbook: <http://docs.openstack.org/developer/openstack-ansible/liberty/install-guide/install-foundation.html#running-the-foundation-playbook> Consider `--skip-tags=mail` if you already have sendmail installed and don't want Postfix (e.g. at CyVerse).
 
 	```
 	time openstack-ansible setup-hosts.yml --ask-vault-pass
