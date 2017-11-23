@@ -22,15 +22,19 @@ TARGET_HOST_NETWORKING:
     # Separate DNS servers with spaces
     dns_servers: 8.8.8.8
     dns_search: domain.com
+    host_vlan_id: 100
+    device1_mtu: 1500
+    device2_mtu: 1500
     container_vlan_id: 101
     tunnel_vlan_id: 102
     storage_vlan_id: 103
   container_network:
-    subnet: 172.29
-    mgmt_subnet: 236
-    tunnel_subnet: 240
-    storage_subnet: 244
-    netmask: 255.255.252.0
+    mgmt_subnet: 172.29.236
+    tunnel_subnet: 172.29.240
+    storage_subnet: 172.29.244
+    mgmt_netmask: 255.255.252.0
+    tunnel_netmask: 255.255.252.0
+    storage_netmask: 255.255.252.0
 
 TARGET_HOSTS:
   infra_control_plane_host1:
@@ -69,6 +73,6 @@ PARTITIONING:
   - "/sbin/parted /dev/sdb -s set 1 lvm on"
   - "/sbin/parted /dev/sdb -s p"
 
-OSA_VERSION: stable/newton
+OSA_VERSION: stable/pike
 
 MIRROR_HOSTS: mirror.domain.com
