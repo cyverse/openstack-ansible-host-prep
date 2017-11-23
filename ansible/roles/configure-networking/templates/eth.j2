@@ -1,6 +1,11 @@
 # {{ ansible_managed }}
+
 auto {{ item.value.device1 }}
-iface {{ item.value.device1 }} inet static
+iface {{ item.value.device1 }} inet manual
+  mtu {{ TARGET_HOST_NETWORKING.host_network.device1_mtu }}
+
+auto {{ item.value.device1 }}.{{ TARGET_HOST_NETWORKING.host_network.host_vlan_id }}
+iface {{ item.value.device1 }}.{{ TARGET_HOST_NETWORKING.host_network.host_vlan_id }} inet static
   address {{ item.value.ip }}
   description management interface
   broadcast {{ TARGET_HOST_NETWORKING.host_network.broadcast }}
@@ -9,20 +14,27 @@ iface {{ item.value.device1 }} inet static
   network {{ TARGET_HOST_NETWORKING.host_network.network }}
   dns-nameservers {{ TARGET_HOST_NETWORKING.host_network.dns_servers }}
   dns-search {{ TARGET_HOST_NETWORKING.host_network.dns_search }}
+  vlan_id {{ TARGET_HOST_NETWORKING.host_network.host_vlan_id }}
+  vlan-raw-device {{ item.value.device1 }}
+  mtu {{ TARGET_HOST_NETWORKING.host_network.device1_mtu }}
 
 auto {{ item.value.device1 }}.{{ TARGET_HOST_NETWORKING.host_network.container_vlan_id }}
 iface {{ item.value.device1 }}.{{ TARGET_HOST_NETWORKING.host_network.container_vlan_id }} inet manual
   vlan-raw-device {{ item.value.device1 }}
+  mtu {{ TARGET_HOST_NETWORKING.host_network.device1_mtu }}
 
 auto {{ item.value.device1 }}.{{ TARGET_HOST_NETWORKING.host_network.storage_vlan_id }}
 iface {{ item.value.device1 }}.{{ TARGET_HOST_NETWORKING.host_network.storage_vlan_id }} inet manual
   vlan-raw-device {{ item.value.device1 }}
+  mtu {{ TARGET_HOST_NETWORKING.host_network.device1_mtu }}
 
 auto {{ item.value.device2 }}
 iface {{ item.value.device2 }} inet manual
   up ip link set dev $IFACE up
   down ip link set dev $IFACE down
+  mtu {{ TARGET_HOST_NETWORKING.host_network.device2_mtu }}
 
 auto {{ item.value.device2 }}.{{ TARGET_HOST_NETWORKING.host_network.tunnel_vlan_id }}
 iface {{ item.value.device2 }}.{{ TARGET_HOST_NETWORKING.host_network.tunnel_vlan_id }} inet manual
   vlan-raw-device {{ item.value.device2 }}
+  mtu {{ TARGET_HOST_NETWORKING.host_network.device2_mtu }}
